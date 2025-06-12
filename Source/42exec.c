@@ -185,7 +185,7 @@ long AdvanceTime(void)
       }
 
       /* Check for end of run */
-      if (SimTime > STOPTIME) Done = 1;
+      if ((STOPTIME != 0.0) && (SimTime > STOPTIME)) Done = 1;
       else Done = 0;
 
       return(Done);
@@ -372,6 +372,8 @@ long SimStep(void)
 
       /* Exit when Stoptime is reached */
       if (SimComplete) {
+         ReportCloseFiles();
+
          if (TimeMode == FAST_TIME) {
             RealRunTime(&TotalRunTime,DTSIM);
             printf("     Total Run Time = %9.2lf sec\n", TotalRunTime);

@@ -17,11 +17,25 @@ long AcWhlTlmEnabled, MaxAcWhlCtr;
 long AcMTBTlmEnabled, MaxAcMTBCtr;
 long AcThrTlmEnabled, MaxAcThrCtr;
 long AcCmdTlmEnabled, MaxAcCmdCtr;
+
+static FILE **AcOutfile = NULL;
+static FILE **AcGOutfile = NULL;
+static FILE **Ac_GCmdOutfile = NULL;
+static FILE **AcGyroOutfile = NULL;
+static FILE **AcMAGOutfile = NULL;
+static FILE **AcCSSOutfile = NULL;
+static FILE **AcFSSOutfile = NULL;
+static FILE **AcSTOutfile = NULL;
+static FILE **AcGPSOutfile = NULL;
+static FILE **AcAccelOutfile = NULL;
+static FILE **AcWhlOutfile = NULL;
+static FILE **AcMTBOutfile = NULL;
+static FILE **AcThrOutfile = NULL;
+static FILE **AcCmdOutfile = NULL;
 /******************************************************************************/
 void WriteAcToCsv(void)
 {
       struct AcType *AC;
-      static FILE **outfile;
       char FileName[80];
       long Isc;
       long i;
@@ -30,26 +44,26 @@ void WriteAcToCsv(void)
 
       if (First) {
          First = 0;
-         outfile = (FILE**) calloc(Nsc,sizeof(FILE *));
+         AcOutfile = (FILE**) calloc(Nsc,sizeof(FILE *));
          for(Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
                if (Nsc==1) sprintf(FileName,"Ac.csv");
                else if (Nsc<=10) sprintf(FileName,"Ac%1ld.csv",Isc);
                else sprintf(FileName,"Ac%02ld.csv",Isc);
-               outfile[Isc] = FileOpen(InOutPath,FileName,"w");
+               AcOutfile[Isc] = FileOpen(InOutPath,FileName,"w");
 
-               fprintf(outfile[Isc],"Ac_Time");
+               fprintf(AcOutfile[Isc],"Ac_Time");
                for(i=0;i<3;i++) {
-                  fprintf(outfile[Isc],",Ac_svb_%ld",i);
+                  fprintf(AcOutfile[Isc],",Ac_svb_%ld",i);
                }
                for(i=0;i<3;i++) {
-                  fprintf(outfile[Isc],",Ac_bvb_%ld",i);
+                  fprintf(AcOutfile[Isc],",Ac_bvb_%ld",i);
                }
                for(i=0;i<3;i++) {
-                  fprintf(outfile[Isc],",Ac_Hvb_%ld",i);
+                  fprintf(AcOutfile[Isc],",Ac_Hvb_%ld",i);
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(AcOutfile[Isc],"\n");
             }
          }
       }
@@ -60,17 +74,17 @@ void WriteAcToCsv(void)
          for (Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
-               fprintf(outfile[Isc],"%18.12le",AC->Time);
+               fprintf(AcOutfile[Isc],"%18.12le",AC->Time);
                for(i=0;i<3;i++) {
-                  fprintf(outfile[Isc],",%18.12le",AC->svb[i]);
+                  fprintf(AcOutfile[Isc],",%18.12le",AC->svb[i]);
                }
                for(i=0;i<3;i++) {
-                  fprintf(outfile[Isc],",%18.12le",AC->bvb[i]);
+                  fprintf(AcOutfile[Isc],",%18.12le",AC->bvb[i]);
                }
                for(i=0;i<3;i++) {
-                  fprintf(outfile[Isc],",%18.12le",AC->Hvb[i]);
+                  fprintf(AcOutfile[Isc],",%18.12le",AC->Hvb[i]);
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(AcOutfile[Isc],"\n");
             }
          }
       }
@@ -80,7 +94,6 @@ void WriteAcToCsv(void)
 void WriteAcGToCsv(void)
 {
       struct AcType *AC;
-      static FILE **outfile;
       char FileName[80];
       long Isc;
       long k;
@@ -90,22 +103,22 @@ void WriteAcGToCsv(void)
 
       if (First) {
          First = 0;
-         outfile = (FILE**) calloc(Nsc,sizeof(FILE *));
+         AcGOutfile = (FILE**) calloc(Nsc,sizeof(FILE *));
          for(Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
                if (Nsc==1) sprintf(FileName,"AcG.csv");
                else if (Nsc<=10) sprintf(FileName,"AcG%1ld.csv",Isc);
                else sprintf(FileName,"AcG%02ld.csv",Isc);
-               outfile[Isc] = FileOpen(InOutPath,FileName,"w");
+               AcGOutfile[Isc] = FileOpen(InOutPath,FileName,"w");
 
-               fprintf(outfile[Isc],"AcG_Time");
+               fprintf(AcGOutfile[Isc],"AcG_Time");
                for(k=0;k<AC->Ng;k++) {
                   for(i=0;i<3;i++) {
-                     fprintf(outfile[Isc],",Ac_G%ld_Ang_%ld",k,i);
+                     fprintf(AcGOutfile[Isc],",Ac_G%ld_Ang_%ld",k,i);
                   }
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(AcGOutfile[Isc],"\n");
             }
          }
       }
@@ -116,13 +129,13 @@ void WriteAcGToCsv(void)
          for (Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
-               fprintf(outfile[Isc],"%18.12le",AC->Time);
+               fprintf(AcGOutfile[Isc],"%18.12le",AC->Time);
                for(k=0;k<AC->Ng;k++) {
                   for(i=0;i<3;i++) {
-                     fprintf(outfile[Isc],",%18.12le",AC->G[k].Ang[i]);
+                     fprintf(AcGOutfile[Isc],",%18.12le",AC->G[k].Ang[i]);
                   }
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(AcGOutfile[Isc],"\n");
             }
          }
       }
@@ -132,7 +145,6 @@ void WriteAcGToCsv(void)
 void WriteAc_GCmdToCsv(void)
 {
       struct AcType *AC;
-      static FILE **outfile;
       char FileName[80];
       long Isc;
       long k;
@@ -142,47 +154,47 @@ void WriteAc_GCmdToCsv(void)
 
       if (First) {
          First = 0;
-         outfile = (FILE**) calloc(Nsc,sizeof(FILE *));
+         Ac_GCmdOutfile = (FILE**) calloc(Nsc,sizeof(FILE *));
          for(Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
                if (Nsc==1) sprintf(FileName,"Ac_GCmd.csv");
                else if (Nsc<=10) sprintf(FileName,"Ac_GCmd%1ld.csv",Isc);
                else sprintf(FileName,"Ac_GCmd%02ld.csv",Isc);
-               outfile[Isc] = FileOpen(InOutPath,FileName,"w");
+               Ac_GCmdOutfile[Isc] = FileOpen(InOutPath,FileName,"w");
 
-               fprintf(outfile[Isc],"Ac_GCmd_Time");
+               fprintf(Ac_GCmdOutfile[Isc],"Ac_GCmd_Time");
                for(k=0;k<AC->Ng;k++) {
                   for(i=0;i<4;i++) {
-                     fprintf(outfile[Isc],",Ac_G%ld_qrl_%ld",k,i);
+                     fprintf(Ac_GCmdOutfile[Isc],",Ac_G%ld_qrl_%ld",k,i);
                   }
                }
                for(k=0;k<AC->Ng;k++) {
                   for(i=0;i<4;i++) {
-                     fprintf(outfile[Isc],",Ac_G%ld_qrn_%ld",k,i);
+                     fprintf(Ac_GCmdOutfile[Isc],",Ac_G%ld_qrn_%ld",k,i);
                   }
                }
                for(k=0;k<AC->Ng;k++) {
                   for(i=0;i<3;i++) {
-                     fprintf(outfile[Isc],",Ac_G%ld_AngRate_%ld",k,i);
+                     fprintf(Ac_GCmdOutfile[Isc],",Ac_G%ld_AngRate_%ld",k,i);
                   }
                }
                for(k=0;k<AC->Ng;k++) {
                   for(i=0;i<3;i++) {
-                     fprintf(outfile[Isc],",Ac_G%ld_Ang_%ld",k,i);
+                     fprintf(Ac_GCmdOutfile[Isc],",Ac_G%ld_Ang_%ld",k,i);
                   }
                }
                for(k=0;k<AC->Ng;k++) {
                   for(i=0;i<3;i++) {
-                     fprintf(outfile[Isc],",Ac_G%ld_PosRate_%ld",k,i);
+                     fprintf(Ac_GCmdOutfile[Isc],",Ac_G%ld_PosRate_%ld",k,i);
                   }
                }
                for(k=0;k<AC->Ng;k++) {
                   for(i=0;i<3;i++) {
-                     fprintf(outfile[Isc],",Ac_G%ld_Pos_%ld",k,i);
+                     fprintf(Ac_GCmdOutfile[Isc],",Ac_G%ld_Pos_%ld",k,i);
                   }
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(Ac_GCmdOutfile[Isc],"\n");
             }
          }
       }
@@ -193,43 +205,43 @@ void WriteAc_GCmdToCsv(void)
          for (Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
-               fprintf(outfile[Isc],"%18.12le",AC->Time);
+               fprintf(Ac_GCmdOutfile[Isc],"%18.12le",AC->Time);
                for(k=0;k<AC->Ng;k++) {
                   for(i=0;i<3;i++) {
-                     fprintf(outfile[Isc],",%18.12le",AC->G[k].Ang[i]);
+                     fprintf(Ac_GCmdOutfile[Isc],",%18.12le",AC->G[k].Ang[i]);
                   }
                }
                for(k=0;k<AC->Ng;k++) {
                   for(i=0;i<4;i++) {
-                     fprintf(outfile[Isc],",%18.12le",AC->G[k].GCmd.qrl[i]);
+                     fprintf(Ac_GCmdOutfile[Isc],",%18.12le",AC->G[k].GCmd.qrl[i]);
                   }
                }
                for(k=0;k<AC->Ng;k++) {
                   for(i=0;i<4;i++) {
-                     fprintf(outfile[Isc],",%18.12le",AC->G[k].GCmd.qrn[i]);
+                     fprintf(Ac_GCmdOutfile[Isc],",%18.12le",AC->G[k].GCmd.qrn[i]);
                   }
                }
                for(k=0;k<AC->Ng;k++) {
                   for(i=0;i<3;i++) {
-                     fprintf(outfile[Isc],",%18.12le",AC->G[k].GCmd.AngRate[i]);
+                     fprintf(Ac_GCmdOutfile[Isc],",%18.12le",AC->G[k].GCmd.AngRate[i]);
                   }
                }
                for(k=0;k<AC->Ng;k++) {
                   for(i=0;i<3;i++) {
-                     fprintf(outfile[Isc],",%18.12le",AC->G[k].GCmd.Ang[i]);
+                     fprintf(Ac_GCmdOutfile[Isc],",%18.12le",AC->G[k].GCmd.Ang[i]);
                   }
                }
                for(k=0;k<AC->Ng;k++) {
                   for(i=0;i<3;i++) {
-                     fprintf(outfile[Isc],",%18.12le",AC->G[k].GCmd.PosRate[i]);
+                     fprintf(Ac_GCmdOutfile[Isc],",%18.12le",AC->G[k].GCmd.PosRate[i]);
                   }
                }
                for(k=0;k<AC->Ng;k++) {
                   for(i=0;i<3;i++) {
-                     fprintf(outfile[Isc],",%18.12le",AC->G[k].GCmd.Pos[i]);
+                     fprintf(Ac_GCmdOutfile[Isc],",%18.12le",AC->G[k].GCmd.Pos[i]);
                   }
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(Ac_GCmdOutfile[Isc],"\n");
             }
          }
       }
@@ -239,7 +251,6 @@ void WriteAc_GCmdToCsv(void)
 void WriteAcGyroToCsv(void)
 {
       struct AcType *AC;
-      static FILE **outfile;
       char FileName[80];
       long Isc;
       long k;
@@ -248,20 +259,20 @@ void WriteAcGyroToCsv(void)
 
       if (First) {
          First = 0;
-         outfile = (FILE**) calloc(Nsc,sizeof(FILE *));
+         AcGyroOutfile = (FILE**) calloc(Nsc,sizeof(FILE *));
          for(Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
                if (Nsc==1) sprintf(FileName,"AcGyro.csv");
                else if (Nsc<=10) sprintf(FileName,"AcGyro%1ld.csv",Isc);
                else sprintf(FileName,"AcGyro%02ld.csv",Isc);
-               outfile[Isc] = FileOpen(InOutPath,FileName,"w");
+               AcGyroOutfile[Isc] = FileOpen(InOutPath,FileName,"w");
 
-               fprintf(outfile[Isc],"AcGyro_Time");
+               fprintf(AcGyroOutfile[Isc],"AcGyro_Time");
                for(k=0;k<AC->Ngyro;k++) {
-                  fprintf(outfile[Isc],",Ac_Gyro%ld_Rate",k);
+                  fprintf(AcGyroOutfile[Isc],",Ac_Gyro%ld_Rate",k);
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(AcGyroOutfile[Isc],"\n");
             }
          }
       }
@@ -272,11 +283,11 @@ void WriteAcGyroToCsv(void)
          for (Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
-               fprintf(outfile[Isc],"%18.12le",AC->Time);
+               fprintf(AcGyroOutfile[Isc],"%18.12le",AC->Time);
                for(k=0;k<AC->Ngyro;k++) {
-                  fprintf(outfile[Isc],",%18.12le",AC->Gyro[k].Rate);
+                  fprintf(AcGyroOutfile[Isc],",%18.12le",AC->Gyro[k].Rate);
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(AcGyroOutfile[Isc],"\n");
             }
          }
       }
@@ -286,7 +297,6 @@ void WriteAcGyroToCsv(void)
 void WriteAcMAGToCsv(void)
 {
       struct AcType *AC;
-      static FILE **outfile;
       char FileName[80];
       long Isc;
       long k;
@@ -295,20 +305,20 @@ void WriteAcMAGToCsv(void)
 
       if (First) {
          First = 0;
-         outfile = (FILE**) calloc(Nsc,sizeof(FILE *));
+         AcMAGOutfile = (FILE**) calloc(Nsc,sizeof(FILE *));
          for(Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
                if (Nsc==1) sprintf(FileName,"AcMAG.csv");
                else if (Nsc<=10) sprintf(FileName,"AcMAG%1ld.csv",Isc);
                else sprintf(FileName,"AcMAG%02ld.csv",Isc);
-               outfile[Isc] = FileOpen(InOutPath,FileName,"w");
+               AcMAGOutfile[Isc] = FileOpen(InOutPath,FileName,"w");
 
-               fprintf(outfile[Isc],"AcMAG_Time");
+               fprintf(AcMAGOutfile[Isc],"AcMAG_Time");
                for(k=0;k<AC->Nmag;k++) {
-                  fprintf(outfile[Isc],",Ac_MAG%ld_Field",k);
+                  fprintf(AcMAGOutfile[Isc],",Ac_MAG%ld_Field",k);
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(AcMAGOutfile[Isc],"\n");
             }
          }
       }
@@ -319,11 +329,11 @@ void WriteAcMAGToCsv(void)
          for (Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
-               fprintf(outfile[Isc],"%18.12le",AC->Time);
+               fprintf(AcMAGOutfile[Isc],"%18.12le",AC->Time);
                for(k=0;k<AC->Nmag;k++) {
-                  fprintf(outfile[Isc],",%18.12le",AC->MAG[k].Field);
+                  fprintf(AcMAGOutfile[Isc],",%18.12le",AC->MAG[k].Field);
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(AcMAGOutfile[Isc],"\n");
             }
          }
       }
@@ -333,7 +343,6 @@ void WriteAcMAGToCsv(void)
 void WriteAcCSSToCsv(void)
 {
       struct AcType *AC;
-      static FILE **outfile;
       char FileName[80];
       long Isc;
       long k;
@@ -342,23 +351,23 @@ void WriteAcCSSToCsv(void)
 
       if (First) {
          First = 0;
-         outfile = (FILE**) calloc(Nsc,sizeof(FILE *));
+         AcCSSOutfile = (FILE**) calloc(Nsc,sizeof(FILE *));
          for(Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
                if (Nsc==1) sprintf(FileName,"AcCSS.csv");
                else if (Nsc<=10) sprintf(FileName,"AcCSS%1ld.csv",Isc);
                else sprintf(FileName,"AcCSS%02ld.csv",Isc);
-               outfile[Isc] = FileOpen(InOutPath,FileName,"w");
+               AcCSSOutfile[Isc] = FileOpen(InOutPath,FileName,"w");
 
-               fprintf(outfile[Isc],"AcCSS_Time");
+               fprintf(AcCSSOutfile[Isc],"AcCSS_Time");
                for(k=0;k<AC->Ncss;k++) {
-                  fprintf(outfile[Isc],",Ac_CSS%ld_Valid",k);
+                  fprintf(AcCSSOutfile[Isc],",Ac_CSS%ld_Valid",k);
                }
                for(k=0;k<AC->Ncss;k++) {
-                  fprintf(outfile[Isc],",Ac_CSS%ld_Illum",k);
+                  fprintf(AcCSSOutfile[Isc],",Ac_CSS%ld_Illum",k);
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(AcCSSOutfile[Isc],"\n");
             }
          }
       }
@@ -369,14 +378,14 @@ void WriteAcCSSToCsv(void)
          for (Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
-               fprintf(outfile[Isc],"%18.12le",AC->Time);
+               fprintf(AcCSSOutfile[Isc],"%18.12le",AC->Time);
                for(k=0;k<AC->Ncss;k++) {
-                  fprintf(outfile[Isc],",%ld",AC->CSS[k].Valid);
+                  fprintf(AcCSSOutfile[Isc],",%ld",AC->CSS[k].Valid);
                }
                for(k=0;k<AC->Ncss;k++) {
-                  fprintf(outfile[Isc],",%18.12le",AC->CSS[k].Illum);
+                  fprintf(AcCSSOutfile[Isc],",%18.12le",AC->CSS[k].Illum);
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(AcCSSOutfile[Isc],"\n");
             }
          }
       }
@@ -386,7 +395,6 @@ void WriteAcCSSToCsv(void)
 void WriteAcFSSToCsv(void)
 {
       struct AcType *AC;
-      static FILE **outfile;
       char FileName[80];
       long Isc;
       long k;
@@ -396,25 +404,25 @@ void WriteAcFSSToCsv(void)
 
       if (First) {
          First = 0;
-         outfile = (FILE**) calloc(Nsc,sizeof(FILE *));
+         AcFSSOutfile = (FILE**) calloc(Nsc,sizeof(FILE *));
          for(Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
                if (Nsc==1) sprintf(FileName,"AcFSS.csv");
                else if (Nsc<=10) sprintf(FileName,"AcFSS%1ld.csv",Isc);
                else sprintf(FileName,"AcFSS%02ld.csv",Isc);
-               outfile[Isc] = FileOpen(InOutPath,FileName,"w");
+               AcFSSOutfile[Isc] = FileOpen(InOutPath,FileName,"w");
 
-               fprintf(outfile[Isc],"AcFSS_Time");
+               fprintf(AcFSSOutfile[Isc],"AcFSS_Time");
                for(k=0;k<AC->Nfss;k++) {
-                  fprintf(outfile[Isc],",Ac_FSS%ld_Valid",k);
+                  fprintf(AcFSSOutfile[Isc],",Ac_FSS%ld_Valid",k);
                }
                for(k=0;k<AC->Nfss;k++) {
                   for(i=0;i<2;i++) {
-                     fprintf(outfile[Isc],",Ac_FSS%ld_SunAng_%ld",k,i);
+                     fprintf(AcFSSOutfile[Isc],",Ac_FSS%ld_SunAng_%ld",k,i);
                   }
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(AcFSSOutfile[Isc],"\n");
             }
          }
       }
@@ -425,16 +433,16 @@ void WriteAcFSSToCsv(void)
          for (Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
-               fprintf(outfile[Isc],"%18.12le",AC->Time);
+               fprintf(AcFSSOutfile[Isc],"%18.12le",AC->Time);
                for(k=0;k<AC->Nfss;k++) {
-                  fprintf(outfile[Isc],",%ld",AC->FSS[k].Valid);
+                  fprintf(AcFSSOutfile[Isc],",%ld",AC->FSS[k].Valid);
                }
                for(k=0;k<AC->Nfss;k++) {
                   for(i=0;i<2;i++) {
-                     fprintf(outfile[Isc],",%18.12le",AC->FSS[k].SunAng[i]);
+                     fprintf(AcFSSOutfile[Isc],",%18.12le",AC->FSS[k].SunAng[i]);
                   }
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(AcFSSOutfile[Isc],"\n");
             }
          }
       }
@@ -444,7 +452,6 @@ void WriteAcFSSToCsv(void)
 void WriteAcSTToCsv(void)
 {
       struct AcType *AC;
-      static FILE **outfile;
       char FileName[80];
       long Isc;
       long k;
@@ -454,25 +461,25 @@ void WriteAcSTToCsv(void)
 
       if (First) {
          First = 0;
-         outfile = (FILE**) calloc(Nsc,sizeof(FILE *));
+         AcSTOutfile = (FILE**) calloc(Nsc,sizeof(FILE *));
          for(Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
                if (Nsc==1) sprintf(FileName,"AcST.csv");
                else if (Nsc<=10) sprintf(FileName,"AcST%1ld.csv",Isc);
                else sprintf(FileName,"AcST%02ld.csv",Isc);
-               outfile[Isc] = FileOpen(InOutPath,FileName,"w");
+               AcSTOutfile[Isc] = FileOpen(InOutPath,FileName,"w");
 
-               fprintf(outfile[Isc],"AcST_Time");
+               fprintf(AcSTOutfile[Isc],"AcST_Time");
                for(k=0;k<AC->Nst;k++) {
-                  fprintf(outfile[Isc],",Ac_ST%ld_Valid",k);
+                  fprintf(AcSTOutfile[Isc],",Ac_ST%ld_Valid",k);
                }
                for(k=0;k<AC->Nst;k++) {
                   for(i=0;i<4;i++) {
-                     fprintf(outfile[Isc],",Ac_ST%ld_qn_%ld",k,i);
+                     fprintf(AcSTOutfile[Isc],",Ac_ST%ld_qn_%ld",k,i);
                   }
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(AcSTOutfile[Isc],"\n");
             }
          }
       }
@@ -483,16 +490,16 @@ void WriteAcSTToCsv(void)
          for (Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
-               fprintf(outfile[Isc],"%18.12le",AC->Time);
+               fprintf(AcSTOutfile[Isc],"%18.12le",AC->Time);
                for(k=0;k<AC->Nst;k++) {
-                  fprintf(outfile[Isc],",%ld",AC->ST[k].Valid);
+                  fprintf(AcSTOutfile[Isc],",%ld",AC->ST[k].Valid);
                }
                for(k=0;k<AC->Nst;k++) {
                   for(i=0;i<4;i++) {
-                     fprintf(outfile[Isc],",%18.12le",AC->ST[k].qn[i]);
+                     fprintf(AcSTOutfile[Isc],",%18.12le",AC->ST[k].qn[i]);
                   }
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(AcSTOutfile[Isc],"\n");
             }
          }
       }
@@ -502,7 +509,6 @@ void WriteAcSTToCsv(void)
 void WriteAcGPSToCsv(void)
 {
       struct AcType *AC;
-      static FILE **outfile;
       char FileName[80];
       long Isc;
       long k;
@@ -512,67 +518,67 @@ void WriteAcGPSToCsv(void)
 
       if (First) {
          First = 0;
-         outfile = (FILE**) calloc(Nsc,sizeof(FILE *));
+         AcGPSOutfile = (FILE**) calloc(Nsc,sizeof(FILE *));
          for(Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
                if (Nsc==1) sprintf(FileName,"AcGPS.csv");
                else if (Nsc<=10) sprintf(FileName,"AcGPS%1ld.csv",Isc);
                else sprintf(FileName,"AcGPS%02ld.csv",Isc);
-               outfile[Isc] = FileOpen(InOutPath,FileName,"w");
+               AcGPSOutfile[Isc] = FileOpen(InOutPath,FileName,"w");
 
-               fprintf(outfile[Isc],"AcGPS_Time");
+               fprintf(AcGPSOutfile[Isc],"AcGPS_Time");
                for(k=0;k<AC->Ngps;k++) {
-                  fprintf(outfile[Isc],",Ac_GPS%ld_Valid",k);
+                  fprintf(AcGPSOutfile[Isc],",Ac_GPS%ld_Valid",k);
                }
                for(k=0;k<AC->Ngps;k++) {
-                  fprintf(outfile[Isc],",Ac_GPS%ld_Rollover",k);
+                  fprintf(AcGPSOutfile[Isc],",Ac_GPS%ld_Rollover",k);
                }
                for(k=0;k<AC->Ngps;k++) {
-                  fprintf(outfile[Isc],",Ac_GPS%ld_Week",k);
+                  fprintf(AcGPSOutfile[Isc],",Ac_GPS%ld_Week",k);
                }
                for(k=0;k<AC->Ngps;k++) {
-                  fprintf(outfile[Isc],",Ac_GPS%ld_Sec",k);
+                  fprintf(AcGPSOutfile[Isc],",Ac_GPS%ld_Sec",k);
                }
                for(k=0;k<AC->Ngps;k++) {
                   for(i=0;i<3;i++) {
-                     fprintf(outfile[Isc],",Ac_GPS%ld_PosN_%ld",k,i);
+                     fprintf(AcGPSOutfile[Isc],",Ac_GPS%ld_PosN_%ld",k,i);
                   }
                }
                for(k=0;k<AC->Ngps;k++) {
                   for(i=0;i<3;i++) {
-                     fprintf(outfile[Isc],",Ac_GPS%ld_VelN_%ld",k,i);
+                     fprintf(AcGPSOutfile[Isc],",Ac_GPS%ld_VelN_%ld",k,i);
                   }
                }
                for(k=0;k<AC->Ngps;k++) {
                   for(i=0;i<3;i++) {
-                     fprintf(outfile[Isc],",Ac_GPS%ld_PosW_%ld",k,i);
+                     fprintf(AcGPSOutfile[Isc],",Ac_GPS%ld_PosW_%ld",k,i);
                   }
                }
                for(k=0;k<AC->Ngps;k++) {
                   for(i=0;i<3;i++) {
-                     fprintf(outfile[Isc],",Ac_GPS%ld_VelW_%ld",k,i);
+                     fprintf(AcGPSOutfile[Isc],",Ac_GPS%ld_VelW_%ld",k,i);
                   }
                }
                for(k=0;k<AC->Ngps;k++) {
-                  fprintf(outfile[Isc],",Ac_GPS%ld_Lng",k);
+                  fprintf(AcGPSOutfile[Isc],",Ac_GPS%ld_Lng",k);
                }
                for(k=0;k<AC->Ngps;k++) {
-                  fprintf(outfile[Isc],",Ac_GPS%ld_Lat",k);
+                  fprintf(AcGPSOutfile[Isc],",Ac_GPS%ld_Lat",k);
                }
                for(k=0;k<AC->Ngps;k++) {
-                  fprintf(outfile[Isc],",Ac_GPS%ld_Alt",k);
+                  fprintf(AcGPSOutfile[Isc],",Ac_GPS%ld_Alt",k);
                }
                for(k=0;k<AC->Ngps;k++) {
-                  fprintf(outfile[Isc],",Ac_GPS%ld_WgsLng",k);
+                  fprintf(AcGPSOutfile[Isc],",Ac_GPS%ld_WgsLng",k);
                }
                for(k=0;k<AC->Ngps;k++) {
-                  fprintf(outfile[Isc],",Ac_GPS%ld_WgsLat",k);
+                  fprintf(AcGPSOutfile[Isc],",Ac_GPS%ld_WgsLat",k);
                }
                for(k=0;k<AC->Ngps;k++) {
-                  fprintf(outfile[Isc],",Ac_GPS%ld_WgsAlt",k);
+                  fprintf(AcGPSOutfile[Isc],",Ac_GPS%ld_WgsAlt",k);
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(AcGPSOutfile[Isc],"\n");
             }
          }
       }
@@ -583,58 +589,58 @@ void WriteAcGPSToCsv(void)
          for (Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
-               fprintf(outfile[Isc],"%18.12le",AC->Time);
+               fprintf(AcGPSOutfile[Isc],"%18.12le",AC->Time);
                for(k=0;k<AC->Ngps;k++) {
-                  fprintf(outfile[Isc],",%ld",AC->GPS[k].Valid);
+                  fprintf(AcGPSOutfile[Isc],",%ld",AC->GPS[k].Valid);
                }
                for(k=0;k<AC->Ngps;k++) {
-                  fprintf(outfile[Isc],",%ld",AC->GPS[k].Rollover);
+                  fprintf(AcGPSOutfile[Isc],",%ld",AC->GPS[k].Rollover);
                }
                for(k=0;k<AC->Ngps;k++) {
-                  fprintf(outfile[Isc],",%ld",AC->GPS[k].Week);
+                  fprintf(AcGPSOutfile[Isc],",%ld",AC->GPS[k].Week);
                }
                for(k=0;k<AC->Ngps;k++) {
-                  fprintf(outfile[Isc],",%18.12le",AC->GPS[k].Sec);
+                  fprintf(AcGPSOutfile[Isc],",%18.12le",AC->GPS[k].Sec);
                }
                for(k=0;k<AC->Ngps;k++) {
                   for(i=0;i<3;i++) {
-                     fprintf(outfile[Isc],",%18.12le",AC->GPS[k].PosN[i]);
+                     fprintf(AcGPSOutfile[Isc],",%18.12le",AC->GPS[k].PosN[i]);
                   }
                }
                for(k=0;k<AC->Ngps;k++) {
                   for(i=0;i<3;i++) {
-                     fprintf(outfile[Isc],",%18.12le",AC->GPS[k].VelN[i]);
+                     fprintf(AcGPSOutfile[Isc],",%18.12le",AC->GPS[k].VelN[i]);
                   }
                }
                for(k=0;k<AC->Ngps;k++) {
                   for(i=0;i<3;i++) {
-                     fprintf(outfile[Isc],",%18.12le",AC->GPS[k].PosW[i]);
+                     fprintf(AcGPSOutfile[Isc],",%18.12le",AC->GPS[k].PosW[i]);
                   }
                }
                for(k=0;k<AC->Ngps;k++) {
                   for(i=0;i<3;i++) {
-                     fprintf(outfile[Isc],",%18.12le",AC->GPS[k].VelW[i]);
+                     fprintf(AcGPSOutfile[Isc],",%18.12le",AC->GPS[k].VelW[i]);
                   }
                }
                for(k=0;k<AC->Ngps;k++) {
-                  fprintf(outfile[Isc],",%18.12le",AC->GPS[k].Lng);
+                  fprintf(AcGPSOutfile[Isc],",%18.12le",AC->GPS[k].Lng);
                }
                for(k=0;k<AC->Ngps;k++) {
-                  fprintf(outfile[Isc],",%18.12le",AC->GPS[k].Lat);
+                  fprintf(AcGPSOutfile[Isc],",%18.12le",AC->GPS[k].Lat);
                }
                for(k=0;k<AC->Ngps;k++) {
-                  fprintf(outfile[Isc],",%18.12le",AC->GPS[k].Alt);
+                  fprintf(AcGPSOutfile[Isc],",%18.12le",AC->GPS[k].Alt);
                }
                for(k=0;k<AC->Ngps;k++) {
-                  fprintf(outfile[Isc],",%18.12le",AC->GPS[k].WgsLng);
+                  fprintf(AcGPSOutfile[Isc],",%18.12le",AC->GPS[k].WgsLng);
                }
                for(k=0;k<AC->Ngps;k++) {
-                  fprintf(outfile[Isc],",%18.12le",AC->GPS[k].WgsLat);
+                  fprintf(AcGPSOutfile[Isc],",%18.12le",AC->GPS[k].WgsLat);
                }
                for(k=0;k<AC->Ngps;k++) {
-                  fprintf(outfile[Isc],",%18.12le",AC->GPS[k].WgsAlt);
+                  fprintf(AcGPSOutfile[Isc],",%18.12le",AC->GPS[k].WgsAlt);
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(AcGPSOutfile[Isc],"\n");
             }
          }
       }
@@ -644,7 +650,6 @@ void WriteAcGPSToCsv(void)
 void WriteAcAccelToCsv(void)
 {
       struct AcType *AC;
-      static FILE **outfile;
       char FileName[80];
       long Isc;
       long k;
@@ -653,20 +658,20 @@ void WriteAcAccelToCsv(void)
 
       if (First) {
          First = 0;
-         outfile = (FILE**) calloc(Nsc,sizeof(FILE *));
+         AcAccelOutfile = (FILE**) calloc(Nsc,sizeof(FILE *));
          for(Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
                if (Nsc==1) sprintf(FileName,"AcAccel.csv");
                else if (Nsc<=10) sprintf(FileName,"AcAccel%1ld.csv",Isc);
                else sprintf(FileName,"AcAccel%02ld.csv",Isc);
-               outfile[Isc] = FileOpen(InOutPath,FileName,"w");
+               AcAccelOutfile[Isc] = FileOpen(InOutPath,FileName,"w");
 
-               fprintf(outfile[Isc],"AcAccel_Time");
+               fprintf(AcAccelOutfile[Isc],"AcAccel_Time");
                for(k=0;k<AC->Nacc;k++) {
-                  fprintf(outfile[Isc],",Ac_Accel%ld_Acc",k);
+                  fprintf(AcAccelOutfile[Isc],",Ac_Accel%ld_Acc",k);
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(AcAccelOutfile[Isc],"\n");
             }
          }
       }
@@ -677,11 +682,11 @@ void WriteAcAccelToCsv(void)
          for (Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
-               fprintf(outfile[Isc],"%18.12le",AC->Time);
+               fprintf(AcAccelOutfile[Isc],"%18.12le",AC->Time);
                for(k=0;k<AC->Nacc;k++) {
-                  fprintf(outfile[Isc],",%18.12le",AC->Accel[k].Acc);
+                  fprintf(AcAccelOutfile[Isc],",%18.12le",AC->Accel[k].Acc);
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(AcAccelOutfile[Isc],"\n");
             }
          }
       }
@@ -691,7 +696,6 @@ void WriteAcAccelToCsv(void)
 void WriteAcWhlToCsv(void)
 {
       struct AcType *AC;
-      static FILE **outfile;
       char FileName[80];
       long Isc;
       long k;
@@ -700,23 +704,23 @@ void WriteAcWhlToCsv(void)
 
       if (First) {
          First = 0;
-         outfile = (FILE**) calloc(Nsc,sizeof(FILE *));
+         AcWhlOutfile = (FILE**) calloc(Nsc,sizeof(FILE *));
          for(Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
                if (Nsc==1) sprintf(FileName,"AcWhl.csv");
                else if (Nsc<=10) sprintf(FileName,"AcWhl%1ld.csv",Isc);
                else sprintf(FileName,"AcWhl%02ld.csv",Isc);
-               outfile[Isc] = FileOpen(InOutPath,FileName,"w");
+               AcWhlOutfile[Isc] = FileOpen(InOutPath,FileName,"w");
 
-               fprintf(outfile[Isc],"AcWhl_Time");
+               fprintf(AcWhlOutfile[Isc],"AcWhl_Time");
                for(k=0;k<AC->Nwhl;k++) {
-                  fprintf(outfile[Isc],",Ac_Whl%ld_H",k);
+                  fprintf(AcWhlOutfile[Isc],",Ac_Whl%ld_H",k);
                }
                for(k=0;k<AC->Nwhl;k++) {
-                  fprintf(outfile[Isc],",Ac_Whl%ld_Tcmd",k);
+                  fprintf(AcWhlOutfile[Isc],",Ac_Whl%ld_Tcmd",k);
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(AcWhlOutfile[Isc],"\n");
             }
          }
       }
@@ -727,14 +731,14 @@ void WriteAcWhlToCsv(void)
          for (Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
-               fprintf(outfile[Isc],"%18.12le",AC->Time);
+               fprintf(AcWhlOutfile[Isc],"%18.12le",AC->Time);
                for(k=0;k<AC->Nwhl;k++) {
-                  fprintf(outfile[Isc],",%18.12le",AC->Whl[k].H);
+                  fprintf(AcWhlOutfile[Isc],",%18.12le",AC->Whl[k].H);
                }
                for(k=0;k<AC->Nwhl;k++) {
-                  fprintf(outfile[Isc],",%18.12le",AC->Whl[k].Tcmd);
+                  fprintf(AcWhlOutfile[Isc],",%18.12le",AC->Whl[k].Tcmd);
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(AcWhlOutfile[Isc],"\n");
             }
          }
       }
@@ -744,7 +748,6 @@ void WriteAcWhlToCsv(void)
 void WriteAcMTBToCsv(void)
 {
       struct AcType *AC;
-      static FILE **outfile;
       char FileName[80];
       long Isc;
       long k;
@@ -753,20 +756,20 @@ void WriteAcMTBToCsv(void)
 
       if (First) {
          First = 0;
-         outfile = (FILE**) calloc(Nsc,sizeof(FILE *));
+         AcMTBOutfile = (FILE**) calloc(Nsc,sizeof(FILE *));
          for(Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
                if (Nsc==1) sprintf(FileName,"AcMTB.csv");
                else if (Nsc<=10) sprintf(FileName,"AcMTB%1ld.csv",Isc);
                else sprintf(FileName,"AcMTB%02ld.csv",Isc);
-               outfile[Isc] = FileOpen(InOutPath,FileName,"w");
+               AcMTBOutfile[Isc] = FileOpen(InOutPath,FileName,"w");
 
-               fprintf(outfile[Isc],"AcMTB_Time");
+               fprintf(AcMTBOutfile[Isc],"AcMTB_Time");
                for(k=0;k<AC->Nmtb;k++) {
-                  fprintf(outfile[Isc],",Ac_MTB%ld_Mcmd",k);
+                  fprintf(AcMTBOutfile[Isc],",Ac_MTB%ld_Mcmd",k);
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(AcMTBOutfile[Isc],"\n");
             }
          }
       }
@@ -777,11 +780,11 @@ void WriteAcMTBToCsv(void)
          for (Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
-               fprintf(outfile[Isc],"%18.12le",AC->Time);
+               fprintf(AcMTBOutfile[Isc],"%18.12le",AC->Time);
                for(k=0;k<AC->Nmtb;k++) {
-                  fprintf(outfile[Isc],",%18.12le",AC->MTB[k].Mcmd);
+                  fprintf(AcMTBOutfile[Isc],",%18.12le",AC->MTB[k].Mcmd);
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(AcMTBOutfile[Isc],"\n");
             }
          }
       }
@@ -791,7 +794,6 @@ void WriteAcMTBToCsv(void)
 void WriteAcThrToCsv(void)
 {
       struct AcType *AC;
-      static FILE **outfile;
       char FileName[80];
       long Isc;
       long k;
@@ -800,23 +802,23 @@ void WriteAcThrToCsv(void)
 
       if (First) {
          First = 0;
-         outfile = (FILE**) calloc(Nsc,sizeof(FILE *));
+         AcThrOutfile = (FILE**) calloc(Nsc,sizeof(FILE *));
          for(Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
                if (Nsc==1) sprintf(FileName,"AcThr.csv");
                else if (Nsc<=10) sprintf(FileName,"AcThr%1ld.csv",Isc);
                else sprintf(FileName,"AcThr%02ld.csv",Isc);
-               outfile[Isc] = FileOpen(InOutPath,FileName,"w");
+               AcThrOutfile[Isc] = FileOpen(InOutPath,FileName,"w");
 
-               fprintf(outfile[Isc],"AcThr_Time");
+               fprintf(AcThrOutfile[Isc],"AcThr_Time");
                for(k=0;k<AC->Nthr;k++) {
-                  fprintf(outfile[Isc],",Ac_Thr%ld_PulseWidthCmd",k);
+                  fprintf(AcThrOutfile[Isc],",Ac_Thr%ld_PulseWidthCmd",k);
                }
                for(k=0;k<AC->Nthr;k++) {
-                  fprintf(outfile[Isc],",Ac_Thr%ld_ThrustLevelCmd",k);
+                  fprintf(AcThrOutfile[Isc],",Ac_Thr%ld_ThrustLevelCmd",k);
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(AcThrOutfile[Isc],"\n");
             }
          }
       }
@@ -827,14 +829,14 @@ void WriteAcThrToCsv(void)
          for (Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
-               fprintf(outfile[Isc],"%18.12le",AC->Time);
+               fprintf(AcThrOutfile[Isc],"%18.12le",AC->Time);
                for(k=0;k<AC->Nthr;k++) {
-                  fprintf(outfile[Isc],",%18.12le",AC->Thr[k].PulseWidthCmd);
+                  fprintf(AcThrOutfile[Isc],",%18.12le",AC->Thr[k].PulseWidthCmd);
                }
                for(k=0;k<AC->Nthr;k++) {
-                  fprintf(outfile[Isc],",%18.12le",AC->Thr[k].ThrustLevelCmd);
+                  fprintf(AcThrOutfile[Isc],",%18.12le",AC->Thr[k].ThrustLevelCmd);
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(AcThrOutfile[Isc],"\n");
             }
          }
       }
@@ -844,7 +846,6 @@ void WriteAcThrToCsv(void)
 void WriteAcCmdToCsv(void)
 {
       struct AcType *AC;
-      static FILE **outfile;
       char FileName[80];
       long Isc;
       long i;
@@ -853,35 +854,35 @@ void WriteAcCmdToCsv(void)
 
       if (First) {
          First = 0;
-         outfile = (FILE**) calloc(Nsc,sizeof(FILE *));
+         AcCmdOutfile = (FILE**) calloc(Nsc,sizeof(FILE *));
          for(Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
                if (Nsc==1) sprintf(FileName,"AcCmd.csv");
                else if (Nsc<=10) sprintf(FileName,"AcCmd%1ld.csv",Isc);
                else sprintf(FileName,"AcCmd%02ld.csv",Isc);
-               outfile[Isc] = FileOpen(InOutPath,FileName,"w");
+               AcCmdOutfile[Isc] = FileOpen(InOutPath,FileName,"w");
 
-               fprintf(outfile[Isc],"AcCmd_Time");
+               fprintf(AcCmdOutfile[Isc],"AcCmd_Time");
                for(i=0;i<4;i++) {
-                  fprintf(outfile[Isc],",Ac_Cmdqrl_%ld",i);
+                  fprintf(AcCmdOutfile[Isc],",Ac_Cmdqrl_%ld",i);
                }
                for(i=0;i<4;i++) {
-                  fprintf(outfile[Isc],",Ac_Cmdqrn_%ld",i);
+                  fprintf(AcCmdOutfile[Isc],",Ac_Cmdqrn_%ld",i);
                }
                for(i=0;i<3;i++) {
-                  fprintf(outfile[Isc],",Ac_CmdAngRate_%ld",i);
+                  fprintf(AcCmdOutfile[Isc],",Ac_CmdAngRate_%ld",i);
                }
                for(i=0;i<3;i++) {
-                  fprintf(outfile[Isc],",Ac_CmdAng_%ld",i);
+                  fprintf(AcCmdOutfile[Isc],",Ac_CmdAng_%ld",i);
                }
                for(i=0;i<3;i++) {
-                  fprintf(outfile[Isc],",Ac_CmdPosRate_%ld",i);
+                  fprintf(AcCmdOutfile[Isc],",Ac_CmdPosRate_%ld",i);
                }
                for(i=0;i<3;i++) {
-                  fprintf(outfile[Isc],",Ac_CmdPos_%ld",i);
+                  fprintf(AcCmdOutfile[Isc],",Ac_CmdPos_%ld",i);
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(AcCmdOutfile[Isc],"\n");
             }
          }
       }
@@ -892,26 +893,26 @@ void WriteAcCmdToCsv(void)
          for (Isc=0;Isc<Nsc;Isc++) {
             if (SC[Isc].Exists) {
                AC = &SC[Isc].AC;
-               fprintf(outfile[Isc],"%18.12le",AC->Time);
+               fprintf(AcCmdOutfile[Isc],"%18.12le",AC->Time);
                for(i=0;i<4;i++) {
-                  fprintf(outfile[Isc],",%18.12le",AC->Cmd.qrl[i]);
+                  fprintf(AcCmdOutfile[Isc],",%18.12le",AC->Cmd.qrl[i]);
                }
                for(i=0;i<4;i++) {
-                  fprintf(outfile[Isc],",%18.12le",AC->Cmd.qrn[i]);
+                  fprintf(AcCmdOutfile[Isc],",%18.12le",AC->Cmd.qrn[i]);
                }
                for(i=0;i<3;i++) {
-                  fprintf(outfile[Isc],",%18.12le",AC->Cmd.AngRate[i]);
+                  fprintf(AcCmdOutfile[Isc],",%18.12le",AC->Cmd.AngRate[i]);
                }
                for(i=0;i<3;i++) {
-                  fprintf(outfile[Isc],",%18.12le",AC->Cmd.Ang[i]);
+                  fprintf(AcCmdOutfile[Isc],",%18.12le",AC->Cmd.Ang[i]);
                }
                for(i=0;i<3;i++) {
-                  fprintf(outfile[Isc],",%18.12le",AC->Cmd.PosRate[i]);
+                  fprintf(AcCmdOutfile[Isc],",%18.12le",AC->Cmd.PosRate[i]);
                }
                for(i=0;i<3;i++) {
-                  fprintf(outfile[Isc],",%18.12le",AC->Cmd.Pos[i]);
+                  fprintf(AcCmdOutfile[Isc],",%18.12le",AC->Cmd.Pos[i]);
                }
-               fprintf(outfile[Isc],"\n");
+               fprintf(AcCmdOutfile[Isc],"\n");
             }
          }
       }
@@ -1060,4 +1061,36 @@ void WriteAcVarsToCsv(void)
       if (AcThrTlmEnabled) WriteAcThrToCsv();
       if (AcCmdTlmEnabled) WriteAcCmdToCsv();
 
+}
+
+void CloseAcCsvFiles(void)
+{
+   FileClose(AcOutfile, Nsc);
+   free(AcOutfile);
+   FileClose(AcGOutfile, Nsc);
+   free(AcGOutfile);
+   FileClose(Ac_GCmdOutfile, Nsc);
+   free(Ac_GCmdOutfile);
+   FileClose(AcGyroOutfile, Nsc);
+   free(AcGyroOutfile);
+   FileClose(AcMAGOutfile, Nsc);
+   free(AcMAGOutfile);
+   FileClose(AcCSSOutfile, Nsc);
+   free(AcCSSOutfile);
+   FileClose(AcFSSOutfile, Nsc);
+   free(AcFSSOutfile);
+   FileClose(AcSTOutfile, Nsc);
+   free(AcSTOutfile);
+   FileClose(AcGPSOutfile, Nsc);
+   free(AcGPSOutfile);
+   FileClose(AcAccelOutfile, Nsc);
+   free(AcAccelOutfile);
+   FileClose(AcWhlOutfile, Nsc);
+   free(AcWhlOutfile);
+   FileClose(AcMTBOutfile, Nsc);
+   free(AcMTBOutfile);
+   FileClose(AcThrOutfile, Nsc);
+   free(AcThrOutfile);
+   FileClose(AcCmdOutfile, Nsc);
+   free(AcCmdOutfile);
 }

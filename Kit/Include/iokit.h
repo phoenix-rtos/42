@@ -42,6 +42,7 @@
 /* #include <sys/un.h> */
 
 FILE *FileOpen(const char *Path, const char *File, const char *CtrlCode);
+void FileClose(FILE **Files, long n);
 void ByteSwapDouble(double *A);
 int FileToString(const char *file_name, char **result_string,
                  size_t *string_len);

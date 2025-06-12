@@ -35,6 +35,16 @@ FILE *FileOpen(const char *Path, const char *File, const char *CtrlCode)
       return(FilePtr);
 }
 /**********************************************************************/
+void FileClose(FILE **Files, long n)
+{
+   long i;
+   if (Files) {
+      for (i = 0; i < n; i++) {
+         if (Files[i]) fclose(Files[i]);
+      }
+   }
+}
+/**********************************************************************/
 void ByteSwapDouble(double *A)
 {
       char fwd[8],bak[8];

@@ -9,3 +9,6 @@ a.out
 *.ipynb
 42
 *.ipynb_checkpoints
+.cache/*
+compile_commands.json
+.vscode/

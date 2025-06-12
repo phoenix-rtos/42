@@ -398,6 +398,7 @@ struct GyroType {
    double Bias; /* rad/sec */
    double Angle; /* rad */
    double MeasRate; /* rad/sec */
+   double lastSampleTime; /* Last sample time, sec */
 };
 
 struct MagnetometerType {
@@ -412,6 +413,7 @@ struct MagnetometerType {
    long Node;
 
    /*~ Internal Variables ~*/
+   double lastSampleTime; /* Last sample time, sec */
    long SampleCounter;
    double Field; /* Magfield Component, Tesla */
 };
@@ -429,6 +431,7 @@ struct CssType {
    long Node;
 
    /*~ Internal Variables ~*/
+   double lastSampleTime; /* Last sample time, sec */
    long SampleCounter;
    long Valid;
    double Illum; /* Units defined by scale */
@@ -450,6 +453,7 @@ struct FssType {
    long V_Axis; /* (BoreAxis+2)%3 */
 
    /*~ Internal Variables ~*/
+   double lastSampleTime; /* Last sample time, sec */
    long SampleCounter;
    long Valid;
    double SunAng[2];
@@ -482,6 +486,7 @@ struct StarTrackerType {
    long V_Axis; /* (BoreAxis+2)%3 */
 
    /*~ Internal Variables ~*/
+   double lastSampleTime; /* Last sample time, sec */
    long SampleCounter;
    long Valid;
    double qn[4];
@@ -497,6 +502,7 @@ struct GpsType {
    long Node;
    
    /*~ Internal Variables ~*/
+   double lastSampleTime; /* Last sample time, sec */
    long SampleCounter;
    long Valid;
    long Rollover;
@@ -524,6 +530,7 @@ struct AccelType {
    double SigE; /* DV Readout Noise, m/s  */
    
    /*~ Internal Variables ~*/
+   double lastSampleTime; /* Last sample time, sec */
    double AccumAccN[3];
    double Bias; /* m/s^2 */
    double PrevVelN[3]; /* m/s */
@@ -594,6 +601,7 @@ struct FgsType {
    double Vr; /* Guide Star in Fr */
 
    /*~ Internal Variables ~*/
+   double lastSampleTime; /* Last sample time, sec */
    long SampleCounter;
    long Valid;
    double StarVecR[3];
@@ -805,9 +813,9 @@ struct SCType {
    struct FgsType *Fgs;          /* [*Nfgs*] */
    struct ShakerType *Shaker;    /* [*Nsh*] */
    
-   #ifdef _AC_STANDALONE_
+   // #ifdef _AC_STANDALONE_
    struct AcIpcType AcIpc;
-   #endif
+   // #endif
 };
 
 struct TargetType {

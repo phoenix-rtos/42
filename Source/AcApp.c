@@ -20,7 +20,7 @@
 */
 
 
-#ifdef _AC_STANDALONE_
+// #ifdef _AC_STANDALONE_
 void WriteAcOutToSocket(struct AcType *AC,struct AcIpcType *I);
 void ReadAcInFromSocket(struct AcType *AC,struct AcIpcType *I);
 void ReadAcTblFromSocket(struct AcType *AC,struct AcIpcType *I);
@@ -105,14 +105,14 @@ void AllocateAcBufs(struct AcIpcType *I)
       I->AcTblBuf = (char *) calloc(I->AcTblBufLen,sizeof(char));
 }
 /**********************************************************************/
-void InitAC(struct AcType *AC)
-{
-      AC->Init = 1;
+// void InitAC(struct AcType *AC)
+// {
+//       AC->Init = 1;
       
-      /* Controllers */
-      AC->CfsCtrl.Init = 1;      
-}
-#endif
+//       /* Controllers */
+//       AC->CfsCtrl.Init = 1;      
+// }
+// #endif
 /**********************************************************************/
 /*  Some Simple Sensor Processing Functions                           */
 /*  corresponding to the Sensor Models in 42sensors.c                 */

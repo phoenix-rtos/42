@@ -177,6 +177,7 @@ void ActuatorDriver(struct SCType *S);
 void Actuators(struct SCType *S);
 void CmdInterpreter(void);
 void Report(void);
+void ReportCloseFiles(void);
 void DrawScene(void);
 void ThreeBodyOrbitRK4(struct OrbitType *O);
 void MotionConstraints(struct SCType *S);

@@ -255,8 +255,8 @@ void IGRFMagField(const char *ModelPath, long N, long M, double pbn[3],double Pr
 
       if (First) {
          First = 0;
-         /* Get data from IGRF20.txt */
-         IGRFfile = FileOpen(ModelPath,"igrf20.txt","r");
+         /* Get data from IGRF25.txt */
+         IGRFfile = FileOpen(ModelPath,"igrf25.txt","r");
          fscanf(IGRFfile,"%[^\n] %[\n]",junk,&newline);
          fscanf(IGRFfile,"%lf %lf %lf",
                 &dum1,&Re,&dum2);

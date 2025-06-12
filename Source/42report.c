@@ -20,8 +20,41 @@
 ** #endif
 */
 
+static FILE *timefile;
+static FILE **xfile, **ufile, **xffile, **uffile;
+static FILE **ConstraintFile;
+static FILE *PosNfile,*VelNfile,*qbnfile,*wbnfile;
+static FILE *PosWfile,*VelWfile;
+static FILE *PosRfile,*VelRfile;
+static FILE *Hvnfile,*KEfile;
+static FILE *Hvbfile;
+static FILE *svnfile,*svbfile;
+static FILE *RPYfile;
+static FILE *Hwhlfile;
+static FILE *MTBfile;
+static FILE *Thrfile;
+static FILE *AlbedoFile;
+static FILE *IllumFile;
+static FILE *ProjAreaFile;
+static FILE *AccFile;
+static FILE *GpsFile;
+static FILE *Kepfile;
+static FILE *EHfile;
+static FILE *magfile;
+static FILE *gyrofile;
+static FILE *FixedFile;
+static FILE *EnckeFile;
+static FILE *CowellFile;
+static FILE *EulHillFile;
+static FILE *GmatOutfile;
+
+/*********************************************************************/
+
 void WriteAcVarsToCsv(void);
 void WriteScVarsToCsv(void);
+
+void CloseAcCsvFiles(void);
+void CloseScCsvFiles(void);
 
 /*********************************************************************/
 double FindTotalProjectedArea(struct SCType *S,double VecN[3])
@@ -82,7 +115,6 @@ double FindTotalUnshadedProjectedArea(struct SCType *S,double VecN[3])
 /*********************************************************************/
 void MagReport(void)
 {
-      static FILE *magfile;
       static long First = 1;
       
       if (First) {
@@ -99,7 +131,6 @@ void MagReport(void)
 /*********************************************************************/
 void GyroReport(void)
 {
-      static FILE *gyrofile;
       static long First = 1;
       
       if (First) {
@@ -119,10 +150,6 @@ void GyroReport(void)
 /*********************************************************************/
 void OrbPropReport(void)
 {
-      static FILE *FixedFile;
-      static FILE *EnckeFile;
-      static FILE *CowellFile;
-      static FILE *EulHillFile;
       static long First = 1;
       
       if (First) {
@@ -151,21 +178,20 @@ void OrbPropReport(void)
 /*********************************************************************/
 void GmatReport(void)
 {
-      static FILE *outfile;
       static long First = 1;
       long i;
       
       if (First) {
          First = 0;
-         outfile = FileOpen(InOutPath,"PosN9sc.42","w");
+         GmatOutfile = FileOpen(InOutPath,"PosN9sc.42","w");
       }
       
       if (OutFlag) {
          for(i=0;i<9;i++) {
-            fprintf(outfile,"%24.18le %24.18le %24.18le ",
+            fprintf(GmatOutfile,"%24.18le %24.18le %24.18le ",
             SC[i].PosN[0],SC[i].PosN[1],SC[i].PosN[2]);
          }
-         fprintf(outfile,"\n");
+         fprintf(GmatOutfile,"\n");
       }
 }
 /*********************************************************************/
@@ -206,28 +232,58 @@ void ReportEpoch(void)
       fclose(outfile);
 }
 /*********************************************************************/
+void ReportCloseFiles(void)
+{
+   FileClose(xfile, Nsc);
+   free(xfile);
+   FileClose(ufile, Nsc);
+   free(ufile);
+   FileClose(xffile, Nsc);
+   free(xffile);
+   FileClose(uffile, Nsc);
+   free(uffile);
+   FileClose(ConstraintFile, Nsc);
+   free(ConstraintFile);
+
+   FileClose(&timefile, 1);
+   FileClose(&PosNfile, 1);
+   FileClose(&VelNfile, 1);
+   FileClose(&qbnfile, 1);
+   FileClose(&wbnfile, 1);
+   FileClose(&PosWfile, 1);
+   FileClose(&VelWfile, 1);
+   FileClose(&PosRfile, 1);
+   FileClose(&VelRfile, 1);
+   FileClose(&Hvnfile, 1);
+   FileClose(&Hvbfile, 1);
+   FileClose(&svnfile, 1);
+   FileClose(&svbfile, 1);
+   FileClose(&KEfile, 1);
+   FileClose(&RPYfile, 1);
+   FileClose(&Hwhlfile, 1);
+   FileClose(&MTBfile, 1);
+   FileClose(&Thrfile, 1);
+   FileClose(&AlbedoFile, 1);
+   FileClose(&IllumFile, 1);
+   FileClose(&ProjAreaFile, 1);
+   FileClose(&AccFile, 1);
+   FileClose(&GpsFile, 1);
+   FileClose(&Kepfile, 1);
+   FileClose(&EHfile, 1);
+   FileClose(&magfile, 1);
+   FileClose(&gyrofile, 1);
+   FileClose(&FixedFile, 1);
+   FileClose(&EnckeFile, 1);
+   FileClose(&CowellFile, 1);
+   FileClose(&EulHillFile, 1);
+   FileClose(&GmatOutfile, 1);
+
+   CloseScCsvFiles();
+   CloseAcCsvFiles();
+}
+
 void Report(void)
 {
-      static FILE *timefile;
-      static FILE **xfile, **ufile, **xffile, **uffile;
-      static FILE **ConstraintFile;
-      static FILE *PosNfile,*VelNfile,*qbnfile,*wbnfile;
-      static FILE *PosWfile,*VelWfile;
-      static FILE *PosRfile,*VelRfile;
-      static FILE *Hvnfile,*KEfile;
-      static FILE *Hvbfile;
-      static FILE *svnfile,*svbfile;
-      static FILE *RPYfile;
-      static FILE *Hwhlfile;
-      static FILE *MTBfile;
-      static FILE *Thrfile;
-      static FILE *AlbedoFile;
-      static FILE *IllumFile;
-      //static FILE *ProjAreaFile;
-      static FILE *AccFile;
-      static FILE *GpsFile;
-      //static FILE *Kepfile;
-      //static FILE *EHfile;
       static char First = TRUE;
       long Isc,i;
       struct DynType *D;
@@ -421,7 +477,7 @@ void Report(void)
                fprintf(IllumFile,"\n");
                fprintf(AlbedoFile,"\n");
             }
-            
+
             //RV2Eph(DynTime,Orb[0].mu,SC[0].PosN,SC[0].VelN,
             //   &SMA,&ecc,&inc,&RAAN,&ArgP,&anom,&tp,&SLR,&alpha,&rmin,
             //   &MeanMotion,&Period);
@@ -448,12 +504,6 @@ void Report(void)
       
       /* An example how to call specialized reporting based on sim case */
       /* if (!strcmp(InOutPath,"./Potato/")) PotatoReport(); */
-      
-
-      if (CleanUpFlag) {
-         fclose(timefile);
-      }
-
 }
 
 /* #ifdef __cplusplus
