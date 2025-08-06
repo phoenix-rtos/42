@@ -2056,10 +2056,10 @@ void WriteScSensorsToSocket(struct SCType *S, struct AcIpcType *I) {
    char *BufPtr = I->AcOutBuf;
    char Ack[4] = "Ack\0";
    long k, i;
-   double timestamp;
+   double timestamp = JDToTime(UTC.JulDay);
 
    // Sim timestamp
-   memcpy(BufPtr, &DynTime, sizeof(double));
+   memcpy(BufPtr, &timestamp, sizeof(double));
    BufPtr += sizeof(double);
 
    // Gyros
@@ -2073,7 +2073,9 @@ void WriteScSensorsToSocket(struct SCType *S, struct AcIpcType *I) {
       timestamp = S->MAG[k].lastSampleTime;
       memcpy(BufPtr, &timestamp, sizeof(double)); BufPtr += sizeof(double);
       memcpy(BufPtr, &S->MAG[k].Field, sizeof(double)); BufPtr += sizeof(double);
+      // printf("Magnetometer %ld: %.3f\n", k, S->MAG[k].Field*1e9);
    }
+   // usleep(1000*10);
    // CSS
    for (k = 0; k < S->Ncss; k++) {
       timestamp = S->CSS[k].lastSampleTime;
@@ -2218,7 +2220,6 @@ void WriteScSensorAxesToSocket(struct SCType *S, struct AcIpcType *I) {
       for (i = 0; i < 4; i++) {
          memcpy(BufPtr, &S->FSS[k].qb[i], sizeof(double)); BufPtr += sizeof(double);
       }
-      printf("FSS[%ld] Quaternion: %f %f %f %f\n", k, S->FSS[k].qb[0], S->FSS[k].qb[1], S->FSS[k].qb[2], S->FSS[k].qb[3]);
    }
 
    // Star Tracker Rotation quaternion
@@ -2234,6 +2235,42 @@ void WriteScSensorAxesToSocket(struct SCType *S, struct AcIpcType *I) {
 }
 
 
+static size_t GetAcBufLen(void)
+{
+   size_t len;
+   len = 3 * sizeof(double);  /* Magnetotorquers */
+   len += 3 * sizeof(double); /* Reaction wheels */
+   return len;
+}
+
+
+static void ReadActuatorsFromSocket(struct AcType *AC, struct AcIpcType *I) {
+   char Ack[4] = "Ack\0";
+
+   double Tcmd[3];
+   read(I->Socket, I->AcInBuf, I->AcInBufLen);
+   char *buf = I->AcInBuf;
+   double temp;
+   size_t sensIdx;
+
+   /* Magnetotorquers */
+   for (sensIdx = 0; sensIdx < 3; sensIdx++) {
+      memcpy(&temp, buf, sizeof(double));
+      buf += sizeof(double);
+      AC->MTB[sensIdx].Mcmd = temp;
+   }
+
+   /* Reaction Wheels */
+   for (sensIdx = 0; sensIdx < 3; sensIdx++) {
+      memcpy(&temp, buf, sizeof(double));
+      buf += sizeof(double);
+      AC->Whl[sensIdx].Tcmd = temp;
+   }
+
+   write(I->Socket, Ack, 4);
+}
+
+
 /**********************************************************************/
 /*  This function is called at the simulation rate.  Sub-sampling of  */
 /*  control loops is managed by FswSampleCounter.                     */
@@ -2243,29 +2280,44 @@ void WriteScSensorAxesToSocket(struct SCType *S, struct AcIpcType *I) {
 /**********************************************************************/
 void FlightSoftWare(struct SCType *S)
 {
-      // #ifdef _AC_STANDALONE_
-      struct AcType *AC;
-      struct AcIpcType *I;
-      // #endif
-            
+      struct AcType *AC = &S->AC;
+      struct AcIpcType *SensIpc = &S->SensIpc;
+      struct AcIpcType *ActIpc = &S->ActIpc;
+      static int calib = 1;
+
+      if (SensIpc->Init) {
+         SensIpc->Init = 0;
+         S->SensIpc.Port = 20001 + SC->ID;
+         S->SensIpc.Socket = InitSocketServer(SensIpc->Port,SensIpc->AllowBlocking);
+         SensIpc->AcOutBufLen = GetScSensorBufLen(S);
+         SensIpc->AcOutBuf = (char *) calloc(SensIpc->AcOutBufLen,sizeof(char));
+         WriteScSensorCountsToSocket(S,SensIpc);
+         WriteScSensorAxesToSocket(S,SensIpc);
+      }
+
+      if (ActIpc->Init) {
+         ActIpc->Init = 0;
+         ActIpc->Port = 30001 + SC->ID;
+         ActIpc->AcInBufLen = GetAcBufLen();
+         ActIpc->AcInBuf = calloc(ActIpc->AcInBufLen, sizeof(char));
+         ActIpc->Socket = InitSocketServer(ActIpc->Port,ActIpc->AllowBlocking);
+      }
+
+      if (calib == 1) {
+         printf("Writing calibration data to socket\n");
+         /* Calibration data */
+         WriteScSensorsToSocket(S,SensIpc);
+         calib = 0;
+      }
+
       S->FswSampleCounter++;
       if (S->FswSampleCounter >= S->FswMaxCounter) {
          S->FswSampleCounter = 0;
 
-         I = &S->AcIpc;
-         if (I->Init) {
-            I->Init = 0;
-            I->AllowBlocking = 1;
-            I->Port = 20001 + SC->ID;
-            I->Socket = InitSocketServer(I->Port,I->AllowBlocking);
-            I->AcOutBufLen = GetScSensorBufLen(S);
-            I->AcOutBuf = (char *) calloc(I->AcOutBufLen,sizeof(char));
+         WriteScSensorsToSocket(S,SensIpc);
 
-            WriteScSensorCountsToSocket(S,I);
-            WriteScSensorAxesToSocket(S,I);
-         }
-         WriteScSensorsToSocket(S,I);
-         
+         // sleep(1);
+
          switch(S->FswTag){
             case PASSIVE_FSW:
                break;
@@ -2307,6 +2359,7 @@ void FlightSoftWare(struct SCType *S)
 
 
          // ReadAcOutFromSocket(AC,I);
+         ReadActuatorsFromSocket(AC, ActIpc);
          
       }
       

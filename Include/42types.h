@@ -814,7 +814,8 @@ struct SCType {
    struct ShakerType *Shaker;    /* [*Nsh*] */
    
    // #ifdef _AC_STANDALONE_
-   struct AcIpcType AcIpc;
+   struct AcIpcType SensIpc;
+   struct AcIpcType ActIpc;
    // #endif
 };
 

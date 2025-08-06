@@ -335,7 +335,7 @@ long SimStep(void)
                PartitionForces(S); /* Orbit-affecting and "internal" */
             }
          }
-         Report();  /* File Output */
+         // Report();  /* Comment out because first run is calibration */
       }
 
       ReportProgress();

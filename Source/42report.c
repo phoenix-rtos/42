@@ -47,6 +47,7 @@ static FILE *EnckeFile;
 static FILE *CowellFile;
 static FILE *EulHillFile;
 static FILE *GmatOutfile;
+static FILE *stateFile;
 
 /*********************************************************************/
 
@@ -277,6 +278,7 @@ void ReportCloseFiles(void)
    FileClose(&CowellFile, 1);
    FileClose(&EulHillFile, 1);
    FileClose(&GmatOutfile, 1);
+   FileClose(&stateFile, 1);
 
    CloseScCsvFiles();
    CloseAcCsvFiles();
@@ -334,6 +336,9 @@ void Report(void)
          PosRfile = FileOpen(InOutPath,"PosR.42","w");
          VelRfile = FileOpen(InOutPath,"VelR.42","w");
          qbnfile = FileOpen(InOutPath,"qbn.42","w");
+         fprintf(qbnfile,"T,q0,q1,q2,q3\n");
+         stateFile = FileOpen(InOutPath, "state.42", "w");
+         fprintf(stateFile, "T,q0,q1,q2,q3,bwx,bwy,bwz,rx,ry,rz,vx,vy,vz\n");
          wbnfile = FileOpen(InOutPath,"wbn.42","w");
          Hvnfile = FileOpen(InOutPath,"Hvn.42","w");
          Hvbfile = FileOpen(InOutPath,"Hvb.42","w");
@@ -367,6 +372,13 @@ void Report(void)
          }
          ReportEpoch();
       }
+
+      fprintf(stateFile, "%lf,%le,%le,%le,%le,%le,%le,%le,%le,%le,%le,%le,%le,%le\n",
+         SimTime,
+         SC[0].B[0].qn[3], SC[0].B[0].qn[0], SC[0].B[0].qn[1], SC[0].B[0].qn[2],
+         SC[0].Gyro[0].Bias,SC[0].Gyro[1].Bias,SC[0].Gyro[2].Bias,
+         SC[0].PosN[0], SC[0].PosN[1], SC[0].PosN[2],
+         SC[0].VelN[0], SC[0].VelN[1], SC[0].VelN[2]);
 
       if (OutFlag) {
          fprintf(timefile,"%lf\n",SimTime);
@@ -426,8 +438,8 @@ void Report(void)
                fprintf(VelRfile,"%le %le %le\n",
                   SC[0].VelR[0],SC[0].VelR[1],SC[0].VelR[2]);
             //}
-            fprintf(qbnfile,"%le %le %le %le\n",
-               SC[0].B[0].qn[0],SC[0].B[0].qn[1],SC[0].B[0].qn[2],SC[0].B[0].qn[3]);
+            fprintf(qbnfile,"%ld,%le,%le,%le,%le\n",
+               (long)(DynTime*1e6),SC[0].B[0].qn[3],SC[0].B[0].qn[0],SC[0].B[0].qn[1],SC[0].B[0].qn[2]);
             fprintf(wbnfile,"%le %le %le\n",
                SC[0].B[0].wn[0],SC[0].B[0].wn[1],SC[0].B[0].wn[2]);
             fprintf(Hvnfile,"%18.12le %18.12le %18.12le\n",

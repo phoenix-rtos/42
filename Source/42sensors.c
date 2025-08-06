@@ -176,13 +176,20 @@ void MagnetometerModel(struct SCType *S)
       double Signal;
       static struct RandomProcessType **MagNoise;
       static long First = 1;
+      static FILE *magFile = NULL;
 
       if (First) {
          First = 0;
          MagNoise = (struct RandomProcessType **) calloc(sizeof(struct RandomProcessType *), S->Nmag);
          for(Imag=0;Imag<S->Nmag;Imag++) {
-            MagNoise[Imag] = CreateRandomProcess(200 + Imag);
+            MagNoise[Imag] = CreateRandomProcess(220 + Imag);
          }
+         magFile = fopen("InOut/mag.csv","w");
+         if (magFile == NULL) {
+            fprintf(stderr,"Error opening mag.csv for writing\n");
+            exit(1);
+         }
+         fprintf(magFile,"T,X,Y,Z\n");
       }
       
       for(Imag=0;Imag<S->Nmag;Imag++) {
@@ -201,6 +208,9 @@ void MagnetometerModel(struct SCType *S)
             S->AC.MAG[Imag].Field = MAG->Field;
          }
       }
+      fprintf(magFile,"%lf,%e,%e,%e\n",
+         DynTime, S->bvn[0]*1e9, S->bvn[1]*1e9, S->bvn[2]*1e9);
+      fflush(magFile);
 }
 /**********************************************************************/
 /* This model credit Paul McKee, summer intern 2018                   */
@@ -267,6 +277,7 @@ void FssModel(struct SCType *S)
       long Counts;
       static long First = 1;
       long Ifss,i;
+      static FILE *fssFile = NULL;
       
       if (First) {
          First = 0;
@@ -274,6 +285,12 @@ void FssModel(struct SCType *S)
          for(Ifss=0;Ifss<S->Nfss;Ifss++) {
             FssNoise[Ifss] = CreateRandomProcess(300 + Ifss);
          }
+         fssFile = fopen("InOut/fss.csv","w");
+         if (fssFile == NULL) {
+            fprintf(stderr,"Error opening fss.csv for writing\n");
+            exit(1);
+         }
+         fprintf(fssFile,"T,X,Y,Z\n");
       }
       
       for(Ifss=0;Ifss<S->Nfss;Ifss++) {
@@ -289,6 +306,7 @@ void FssModel(struct SCType *S)
             }
             else {
                MxV(FSS->CB,S->svb,svs);
+               // QxV(FSS->qb,S->svb,svs);
                SunAng[0] = atan2(svs[FSS->H_Axis],svs[FSS->BoreAxis]);
                SunAng[1] = atan2(svs[FSS->V_Axis],svs[FSS->BoreAxis]);
                if (fabs(SunAng[0]) < FSS->FovHalfAng[0] && 
@@ -307,6 +325,7 @@ void FssModel(struct SCType *S)
                   Counts = (long) (Signal/FSS->Quant+0.5);
                   FSS->SunAng[i] = ((double) Counts)*FSS->Quant;
                }
+               fprintf(fssFile,"%lu,%e,%e,%e\n", (uint64_t)(DynTime*1e6), S->svb[0], S->svb[1], S->svb[2]);
             }
             else {
                FSS->SunAng[0] = 0.0;
@@ -318,6 +337,7 @@ void FssModel(struct SCType *S)
             
          }
       }
+      fflush(fssFile);
 }
 /**********************************************************************/
 void StarTrackerModel(struct SCType *S)
@@ -332,6 +352,7 @@ void StarTrackerModel(struct SCType *S)
       double qsb[4];
       static long First = 1;
       long Ist,i;
+      static FILE *stFile;
       
       if (First) {
          First = 0;
@@ -339,6 +360,8 @@ void StarTrackerModel(struct SCType *S)
          for(Ist=0;Ist<S->Nst;Ist++) {
             StNoise[Ist] = CreateRandomProcess(400 + Ist);
          }
+         stFile = fopen("InOut/st.csv","w");
+         fprintf(stFile,"T,q0,q1,q2,q3\n");
       }
       
       for(Ist=0;Ist<S->Nst;Ist++) {
@@ -453,6 +476,13 @@ void GpsModel(struct SCType *S)
                S->AC.GPS[Ig].WgsLng = GPS->WgsLng;
                S->AC.GPS[Ig].WgsLat = GPS->WgsLat;
                S->AC.GPS[Ig].WgsAlt = GPS->WgsAlt;
+
+               // printf("PosN: %lf %lf %lf\nPosW: %lf %lf %lf\n", 
+               //    GPS->PosN[0],GPS->PosN[1],GPS->PosN[2],
+               //    GPS->PosW[0],GPS->PosW[1],GPS->PosW[2]);
+               // printf("VelN: %lf %lf %lf\nVelW: %lf %lf %lf\n", 
+               //    GPS->VelN[0],GPS->VelN[1],GPS->VelN[2],
+               //    GPS->VelW[0],GPS->VelW[1],GPS->VelW[2]);
                
             }
          }
