@@ -14,7 +14,7 @@ KEP                           !  Use Keplerian elements (KEP) or (RV) or FILE
 PA                            !  Use Peri/Apoapsis (PA) or min alt/ecc (AE)
 600.0      600.0              !  Periapsis & Apoapsis Altitude, km
 600.0  2.0                    !  Min Altitude (km), Eccentricity
-52.0                          !  Inclination (deg)
+75.0                          !  Inclination (deg)
 0.0                         !  Right Ascension of Ascending Node (deg)
 0.0                           !  Argument of Periapsis (deg)
 180.0                           !  True Anomaly (deg)
