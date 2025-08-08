@@ -2271,6 +2271,44 @@ static void ReadActuatorsFromSocket(struct AcType *AC, struct AcIpcType *I) {
 }
 
 
+#include <fcntl.h>
+#include <termios.h>
+#include <unistd.h>
+
+int set_serial_attributes(int fd)
+{
+   struct termios tty;
+
+   // Read in existing settings
+   if (tcgetattr(fd, &tty) != 0) {
+      perror("tcgetattr failed");
+      return -1;
+   }
+
+   cfsetospeed(&tty, B115200);
+   cfsetispeed(&tty, B115200);
+
+   tty.c_cflag |= (CLOCAL | CREAD);    // Enable receiver, ignore modem control lines
+   tty.c_cflag &= ~CSIZE;              // Clear character size mask
+   tty.c_cflag |= CS8;                 // 8 data bits
+   tty.c_cflag &= ~PARENB;             // No parity
+   tty.c_cflag &= ~CSTOPB;             // 1 stop bit
+
+   tty.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+   tty.c_oflag &= ~OPOST;
+
+   // blocking read
+   tty.c_cc[VMIN]  = 1;
+   tty.c_cc[VTIME] = 0;
+
+   if (tcsetattr(fd, TCSANOW, &tty) != 0) {
+      perror("tcsetattr failed");
+      return -1;
+   }
+
+   return 0;
+}
+
 /**********************************************************************/
 /*  This function is called at the simulation rate.  Sub-sampling of  */
 /*  control loops is managed by FswSampleCounter.                     */
@@ -2283,12 +2321,13 @@ void FlightSoftWare(struct SCType *S)
       struct AcType *AC = &S->AC;
       struct AcIpcType *SensIpc = &S->SensIpc;
       struct AcIpcType *ActIpc = &S->ActIpc;
-      static int calib = 1;
+      static int calib = 0;
 
       if (SensIpc->Init) {
          SensIpc->Init = 0;
          S->SensIpc.Port = 20001 + SC->ID;
-         S->SensIpc.Socket = InitSocketServer(SensIpc->Port,SensIpc->AllowBlocking);
+         S->SensIpc.Socket = open("/tmp/channel1B", O_RDWR | O_NOCTTY);//InitSocketServer(SensIpc->Port,SensIpc->AllowBlocking);
+         set_serial_attributes(SensIpc->Socket);
          SensIpc->AcOutBufLen = GetScSensorBufLen(S);
          SensIpc->AcOutBuf = (char *) calloc(SensIpc->AcOutBufLen,sizeof(char));
          WriteScSensorCountsToSocket(S,SensIpc);
@@ -2300,7 +2339,8 @@ void FlightSoftWare(struct SCType *S)
          ActIpc->Port = 30001 + SC->ID;
          ActIpc->AcInBufLen = GetAcBufLen();
          ActIpc->AcInBuf = calloc(ActIpc->AcInBufLen, sizeof(char));
-         ActIpc->Socket = InitSocketServer(ActIpc->Port,ActIpc->AllowBlocking);
+         ActIpc->Socket = open("/tmp/channel2B", O_RDWR | O_NOCTTY);//InitSocketServer(ActIpc->Port,ActIpc->AllowBlocking);
+         set_serial_attributes(ActIpc->Socket);
       }
 
       if (calib == 1) {
