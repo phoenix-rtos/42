@@ -3,17 +3,17 @@
 "Cube 6"                      !  Label
 GenScSpriteAlpha.ppm          !  Sprite File Name
 PASSIVE_FSW                 !  Flight Software Identifier
-0.02                         !  FSW Sample Time, sec
+0.1                         !  FSW Sample Time, sec
 ************************* Orbit Parameters ****************************
-ENCKE                       !  Orbit Prop FIXED, EULER_HILL, ENCKE, or COWELL
+FIXED                       !  Orbit Prop FIXED, EULER_HILL, ENCKE, or COWELL
 CM                          !  Pos of CM or ORIGIN, wrt F
 0.0  0.0  0.0               !  Pos wrt Formation (m), expressed in F
 0.0  0.0  0.0               !  Vel wrt Formation (m/s), expressed in F
 *************************** Initial Attitude ***************************
 NAN                         ! Ang Vel wrt [NL], Att [QA] wrt [NLEF]
-30.0    50.0    -30.0           ! Ang Vel (deg/sec)
+1.0    1.0    1.0           ! Ang Vel (deg/sec)
 0.0    0.0    0.0    1.0    ! Quaternion
-0.0   0.0    0.0    213    ! Angles (deg) & Euler Sequence
+90.0   180.1    90.1    213    ! Angles (deg) & Euler Sequence
 ***************************  Dynamics Flags  ***************************
 GAUSS_ELIM                  ! Solve Dynamics by GAUSS_ELIM or ORDER_N
 FALSE                       ! Compute Constraint Forces and Torques
@@ -28,7 +28,7 @@ NONE                        ! Shaker File Name
 1                             ! Number of Bodies
 ================================ Body 0 ================================
 1.0                           ! Mass
-0.4  0.4  0.4                 ! Moments of Inertia (kg-m^2)
+2.0  3.0  1.2                 ! Moments of Inertia (kg-m^2)
 0.0  0.0  0.0                 ! Products of Inertia (xy,xz,yz)
 0.0  0.0  0.0                 ! Location of mass center, m
 0.0  0.0  0.0                 ! Constant Embedded Momentum (Nms)
@@ -87,19 +87,19 @@ NONE                        ! Drag/Jitter Input File Name
 **************************** MTB Parameters ****************************
 3                           ! Number of MTBs
 ==============================  MTB 0  =================================
-2.0                         ! Saturation (A-m^2)
+200.0                         ! Saturation (A-m^2)
 1.0   0.0   0.0             ! MTB Axis Components, [X, Y, Z]
 0                           ! Node
 ==============================  MTB 1  =================================
-2.0                         ! Saturation (A-m^2)
+200.0                         ! Saturation (A-m^2)
 0.0   1.0   0.0             ! MTB Axis Components, [X, Y, Z]
 0                           ! Node
 ==============================  MTB 2  =================================
-2.0                         ! Saturation (A-m^2)
+200.0                         ! Saturation (A-m^2)
 0.0   0.0   1.0             ! MTB Axis Components, [X, Y, Z]
 0                           ! Node
 ************************* Thruster Parameters **************************
-0                           ! Number of Thrusters
+1                           ! Number of Thrusters
 ==============================  Thr 0  =================================
 PULSED                      ! Mode (PULSED or PROPORTIONAL)
  1.0                        ! Thrust Force (N)
@@ -109,7 +109,7 @@ PULSED                      ! Mode (PULSED or PROPORTIONAL)
 ******************************* Gyro ************************************
 3                           ! Number of Gyro Axes
 ============================== Axis 0 ===================================
-0.01                         ! Sample Time,sec
+0.1                         ! Sample Time,sec
 1.0  0.0  0.0               ! Axis expressed in Body Frame
 1000.0                      ! Max Rate, deg/sec
 100.0                       ! Scale Factor Error, ppm
@@ -117,21 +117,21 @@ PULSED                      ! Mode (PULSED or PROPORTIONAL)
 0.07                        ! Angle Random Walk (deg/rt-hr)
 0.1  1.0                    ! Bias Stability (deg/hr) over timespan (hr)
 0.1                         ! Angle Noise, arcsec RMS
-0.0                         ! Initial Bias (deg/hr)
+0.1                         ! Initial Bias (deg/hr)
 0                           ! Node
 ============================== Axis 1 ===================================
-0.01                         ! Sample Time,sec
+0.1                         ! Sample Time,sec
 0.0  1.0  0.0               ! Axis expressed in Body Frame
 1000.0                      ! Max Rate, deg/sec
 100.0                       ! Scale Factor Error, ppm
 0.1                         ! Quantization, arcsec 
 0.07                        ! Angle Random Walk (deg/rt-hr)
 0.1  1.0                    ! Bias Stability (deg/hr) over timespan (hr)
-0.01                         ! Angle Noise, arcsec RMS
-0.0                         ! Initial Bias (deg/hr)
+0.1                         ! Angle Noise, arcsec RMS
+0.1                         ! Initial Bias (deg/hr)
 0                           ! Node
 ============================== Axis 2 ===================================
-0.01                         ! Sample Time,sec
+0.1                         ! Sample Time,sec
 0.0  0.0  1.0               ! Axis expressed in Body Frame
 1000.0                      ! Max Rate, deg/sec
 100.0                       ! Scale Factor Error, ppm
@@ -139,33 +139,33 @@ PULSED                      ! Mode (PULSED or PROPORTIONAL)
 0.07                        ! Angle Random Walk (deg/rt-hr)
 0.1  1.0                    ! Bias Stability (deg/hr) over timespan (hr)
 0.1                         ! Angle Noise, arcsec RMS
-0.0                         ! Initial Bias (deg/hr)
+0.1                         ! Initial Bias (deg/hr)
 0                           ! Node
 *************************** Magnetometer ********************************
 3                           ! Number of Magnetometer Axes
 ============================== Axis 0 ===================================
-0.01                         ! Sample Time,sec
+0.1                         ! Sample Time,sec
 1.0  0.0  0.0               ! Axis expressed in Body Frame
 60.0                     ! Saturation, Tesla
 0.0                         ! Scale Factor Error, ppm
-1.0E-9                      ! Quantization, Tesla
-10.0E-12                      ! Noise, Tesla RMS
+1.0E-9                      ! Quantization, Tesla 
+1.0E-15                      ! Noise, Tesla RMS
 0                           ! Node
 ============================== Axis 1 ===================================
-0.01                         ! Sample Time,sec
+0.1                         ! Sample Time,sec
 0.0  1.0  0.0               ! Axis expressed in Body Frame
 60.0                     ! Saturation, Tesla
 0.0                         ! Scale Factor Error, ppm
 1.0E-9                      ! Quantization, Tesla
-10.0E-12                      ! Noise, Tesla RMS
+1.0E-15                      ! Noise, Tesla RMS
 0                           ! Node
 ============================== Axis 2 ===================================
-0.01                         ! Sample Time,sec
+0.1                         ! Sample Time,sec
 0.0  0.0  1.0               ! Axis expressed in Body Frame
 60.0                     ! Saturation, Tesla
 0.0                         ! Scale Factor Error, ppm
 1.0E-9                      ! Quantization, Tesla
-10.0E-12                      ! Noise, Tesla RMS
+1.0E-15                      ! Noise, Tesla RMS
 0                           ! Node
 *********************** Coarse Sun Sensor *******************************
 0                           ! Number of Coarse Sun Sensors
@@ -178,29 +178,69 @@ PULSED                      ! Mode (PULSED or PROPORTIONAL)
 0                           ! Body
 0                           ! Node
 ************************* Fine Sun Sensor *******************************
-0                           ! Number of Fine Sun Sensors
+6                           ! Number of Fine Sun Sensors
 =============================== FSS 0 ===================================
-0.05                         ! Sample Time,sec
+0.1                         ! Sample Time,sec
 0.0  0.0  0.0  123          ! Mounting Angles (deg), Seq in Body
 Z_AXIS                      ! Boresight Axis X_AXIS, Y_AXIS, or Z_AXIS
 90.0   90.0                 ! H, V FOV Size, deg
-0.001                         ! Noise Equivalent Angle, deg RMS
-0.001                         ! Quantization, deg
+0.1                         ! Noise Equivalent Angle, deg RMS
+0.1                         ! Quantization, deg
+0                           ! Node
+=============================== FSS 1 ===================================
+0.1                         ! Sample Time,sec
+180.0  0.0  0.0  123        ! Mounting Angles (deg), Seq in Body
+Z_AXIS                      ! Boresight Axis X_AXIS, Y_AXIS, or Z_AXIS
+90.0   90.0                 ! H, V FOV Size, deg
+0.1                         ! Noise Equivalent Angle, deg RMS
+0.1                         ! Quantization, deg
+0                           ! Node
+=============================== FSS 2 ===================================
+0.1                         ! Sample Time,sec
+90.0  0.0  0.0  123         ! Mounting Angles (deg), Seq in Body
+Z_AXIS                      ! Boresight Axis X_AXIS, Y_AXIS, or Z_AXIS
+90.0   90.0                 ! H, V FOV Size, deg
+0.1                         ! Noise Equivalent Angle, deg RMS
+0.1                         ! Quantization, deg
+0                           ! Node
+=============================== FSS 3 ===================================
+0.1                         ! Sample Time,sec
+-90.0  0.0  0.0  123        ! Mounting Angles (deg), Seq in Body
+Z_AXIS                      ! Boresight Axis X_AXIS, Y_AXIS, or Z_AXIS
+90.0   90.0                 ! H, V FOV Size, deg
+0.1                         ! Noise Equivalent Angle, deg RMS
+0.1                         ! Quantization, deg
+0                           ! Node
+=============================== FSS 4 ===================================
+0.1                         ! Sample Time,sec
+0.0  90.0  0.0  123         ! Mounting Angles (deg), Seq in Body
+Z_AXIS                      ! Boresight Axis X_AXIS, Y_AXIS, or Z_AXIS
+90.0   90.0                 ! H, V FOV Size, deg
+0.1                         ! Noise Equivalent Angle, deg RMS
+0.1                         ! Quantization, deg
+0                           ! Node
+=============================== FSS 5 ===================================
+0.1                         ! Sample Time,sec
+0.0 -90.0  0.0  123         ! Mounting Angles (deg), Seq in Body
+Z_AXIS                      ! Boresight Axis X_AXIS, Y_AXIS, or Z_AXIS
+90.0   90.0                 ! H, V FOV Size, deg
+0.1                         ! Noise Equivalent Angle, deg RMS
+0.1                         ! Quantization, deg
 0                           ! Node
 ************************** Star Tracker *********************************
 0                           ! Number of Star Trackers
 =============================== ST 0 ====================================
-0.2                        ! Sample Time,sec
+0.25                        ! Sample Time,sec
 -90.0  90.0  00.0  321      ! Mounting Angles (deg), Seq in Body
 Z_AXIS                      ! Boresight Axis X_AXIS, Y_AXIS, or Z_AXIS
-19.0   14.0                   ! H, V FOV Size, deg
-45.0  10.0  10.0            ! Sun, Earth, Moon Exclusion Angles, deg
-3.0  3.0  10.0              ! Noise Equivalent Angle, arcsec RMS
+28.0   28.0                   ! H, V FOV Size, deg
+30.0  10.0  10.0            ! Sun, Earth, Moon Exclusion Angles, deg
+2.0  2.0  20.0              ! Noise Equivalent Angle, arcsec RMS
 0                           ! Node
 ****************************** GPS **************************************
-0                           ! Number of GPS Receivers
+1                           ! Number of GPS Receivers
 ============================= GPSR 0 ====================================
-0.2                        ! Sample Time,sec
+0.25                        ! Sample Time,sec
 4.0                         ! Position Noise, m RMS
 0.02                        ! Velocity Noise, m/sec RMS
 20.0E-9                     ! Time Noise, sec RMS

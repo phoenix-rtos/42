@@ -2052,6 +2052,38 @@ static size_t GetScSensorBufLen(struct SCType *S)
 }
 
 
+static int readExact(int fd, char *buf, size_t len)
+{
+	size_t total = 0;
+	ssize_t n;
+	char *p = buf;
+	while (total < len) {
+		n = read(fd, p + total, len - total);
+		if (n <= 0) {
+			return -1;
+		}
+		total += n;
+	}
+	return total;
+}
+
+
+static int writeExact(int fd, const char *buf, size_t len)
+{
+	size_t total = 0;
+	ssize_t n;
+	const char *p = buf;
+	while (total < len) {
+		n = write(fd, p + total, len - total);
+		if (n <= 0) {
+			return -1;
+		}
+		total += n;
+	}
+	return total;
+}
+
+
 void WriteScSensorsToSocket(struct SCType *S, struct AcIpcType *I) {
    char *BufPtr = I->AcOutBuf;
    char Ack[4] = "Ack\0";
@@ -2140,13 +2172,14 @@ void WriteScSensorsToSocket(struct SCType *S, struct AcIpcType *I) {
    }
 
    // Send buffer
-   write(I->Socket, I->AcOutBuf, I->AcOutBufLen);
-   read(I->Socket, Ack, 4);
+   writeExact(I->Socket, I->AcOutBuf, I->AcOutBufLen);
+   readExact(I->Socket, Ack, 1);
 }
 
 
 void WriteScSensorCountsToSocket(struct SCType *S, struct AcIpcType *I) {
-   char Ack[4] = "Ack\0";
+   char Ack[1];
+   readExact(I->Socket, Ack, 1);
    char buf[7 * sizeof(uint32_t)];
    char *ptr = buf;
    uint32_t Ngyro = S->Ngyro;
@@ -2165,8 +2198,8 @@ void WriteScSensorCountsToSocket(struct SCType *S, struct AcIpcType *I) {
    memcpy(ptr, &Nacc,  sizeof(uint32_t)); ptr += sizeof(uint32_t);
    printf("Writing sensor counts to socket: Ngyro=%u, Nmag=%u, Ncss=%u, Nfss=%u, Nst=%u, Ngps=%u, Nacc=%u\n",
           Ngyro, Nmag, Ncss, Nfss, Nst, Ngps, Nacc);
-   write(I->Socket, buf, sizeof(buf));
-   read(I->Socket, Ack, 4);
+   writeExact(I->Socket, buf, sizeof(buf));
+   readExact(I->Socket, Ack, 1);
 }
 
 
@@ -2229,8 +2262,8 @@ void WriteScSensorAxesToSocket(struct SCType *S, struct AcIpcType *I) {
       }
    }
 
-   write(I->Socket, buf, len);
-   read(I->Socket, Ack, 4);
+   writeExact(I->Socket, buf, len);
+   readExact(I->Socket, Ack, 1);
    free(buf);
 }
 
@@ -2239,16 +2272,16 @@ static size_t GetAcBufLen(void)
 {
    size_t len;
    len = 3 * sizeof(double);  /* Magnetotorquers */
-   len += 3 * sizeof(double); /* Reaction wheels */
+   // len += 3 * sizeof(double); /* Reaction wheels */
    return len;
 }
 
 
 static void ReadActuatorsFromSocket(struct AcType *AC, struct AcIpcType *I) {
-   char Ack[4] = "Ack\0";
+   char Ack[1] = { 0 };
 
    double Tcmd[3];
-   read(I->Socket, I->AcInBuf, I->AcInBufLen);
+   readExact(I->Socket, I->AcInBuf, I->AcInBufLen);
    char *buf = I->AcInBuf;
    double temp;
    size_t sensIdx;
@@ -2261,13 +2294,13 @@ static void ReadActuatorsFromSocket(struct AcType *AC, struct AcIpcType *I) {
    }
 
    /* Reaction Wheels */
-   for (sensIdx = 0; sensIdx < 3; sensIdx++) {
-      memcpy(&temp, buf, sizeof(double));
-      buf += sizeof(double);
-      AC->Whl[sensIdx].Tcmd = temp;
-   }
+   // for (sensIdx = 0; sensIdx < 3; sensIdx++) {
+   //    memcpy(&temp, buf, sizeof(double));
+   //    buf += sizeof(double);
+   //    AC->Whl[sensIdx].Tcmd = temp;
+   // }
 
-   write(I->Socket, Ack, 4);
+   writeExact(I->Socket, Ack, 1);
 }
 
 
@@ -2285,21 +2318,20 @@ int set_serial_attributes(int fd)
       return -1;
    }
 
-   cfsetospeed(&tty, B115200);
-   cfsetispeed(&tty, B115200);
+   cfsetospeed(&tty, B230400);
+   cfsetispeed(&tty, B230400);
 
-   tty.c_cflag |= (CLOCAL | CREAD);    // Enable receiver, ignore modem control lines
-   tty.c_cflag &= ~CSIZE;              // Clear character size mask
-   tty.c_cflag |= CS8;                 // 8 data bits
-   tty.c_cflag &= ~PARENB;             // No parity
-   tty.c_cflag &= ~CSTOPB;             // 1 stop bit
+	tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8;  // 8-bit chars
+	tty.c_iflag &= ~IGNBRK;                      // disable break processing
+	tty.c_lflag = 0;                             // no signaling chars, no echo, no canonical processing
+	tty.c_oflag = 0;                             // no remapping, no delays
+	tty.c_cc[VMIN] = 1;                          // read blocks
+	tty.c_cc[VTIME] = 0;                         // 5 seconds read timeout
 
-   tty.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
-   tty.c_oflag &= ~OPOST;
-
-   // blocking read
-   tty.c_cc[VMIN]  = 1;
-   tty.c_cc[VTIME] = 0;
+	tty.c_iflag &= ~(IXON | IXOFF | IXANY);  // shut off xon/xoff ctrl
+	tty.c_cflag |= (CLOCAL | CREAD);         // ignore modem controls, enable reading
+	tty.c_cflag &= ~(PARENB | PARODD);       // shut off parity
+	tty.c_cflag &= ~CSTOPB;
 
    if (tcsetattr(fd, TCSANOW, &tty) != 0) {
       perror("tcsetattr failed");
@@ -2326,7 +2358,8 @@ void FlightSoftWare(struct SCType *S)
       if (SensIpc->Init) {
          SensIpc->Init = 0;
          S->SensIpc.Port = 20001 + SC->ID;
-         S->SensIpc.Socket = open("/tmp/channel1B", O_RDWR | O_NOCTTY);//InitSocketServer(SensIpc->Port,SensIpc->AllowBlocking);
+         // S->SensIpc.Socket = open("/tmp/channel1B", O_RDWR | O_NOCTTY);//InitSocketServer(SensIpc->Port,SensIpc->AllowBlocking);
+         S->SensIpc.Socket = open("/dev/ttyUSB0", O_RDWR | O_NOCTTY);//InitSocketServer(SensIpc->Port,SensIpc->AllowBlocking);
          set_serial_attributes(SensIpc->Socket);
          SensIpc->AcOutBufLen = GetScSensorBufLen(S);
          SensIpc->AcOutBuf = (char *) calloc(SensIpc->AcOutBufLen,sizeof(char));
@@ -2339,7 +2372,8 @@ void FlightSoftWare(struct SCType *S)
          ActIpc->Port = 30001 + SC->ID;
          ActIpc->AcInBufLen = GetAcBufLen();
          ActIpc->AcInBuf = calloc(ActIpc->AcInBufLen, sizeof(char));
-         ActIpc->Socket = open("/tmp/channel2B", O_RDWR | O_NOCTTY);//InitSocketServer(ActIpc->Port,ActIpc->AllowBlocking);
+         // ActIpc->Socket = open("/tmp/channel2B", O_RDWR | O_NOCTTY);//InitSocketServer(ActIpc->Port,ActIpc->AllowBlocking);
+         ActIpc->Socket = open("/dev/ttyUSB1", O_RDWR | O_NOCTTY);//InitSocketServer(ActIpc->Port,ActIpc->AllowBlocking);
          set_serial_attributes(ActIpc->Socket);
       }
 
