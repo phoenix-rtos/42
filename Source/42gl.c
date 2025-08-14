@@ -17,6 +17,17 @@
 #include "42gl.h"
 #undef EXTERN
 
+/* Kinetic Energy plot */
+long KEWindowExists = 0;
+long KEWindowWidth = 480;
+long KEWindowHeight = 240;
+char KEWindowTitle[40] = "42 Kinetic Energy";
+double *KETimeHist = NULL;
+double *KEHist = NULL;
+long KEHistN = 0;
+long KEHistAlloc = 0;
+double KEYMin = 0.0, KEYMax = 0.0; /* Will be reset to sentinels on first append */
+
 /* #ifdef __cplusplus
 ** namespace _42 {
 ** using namespace Kit;
@@ -677,6 +688,28 @@ void DrawCamHUD(void)
       int i;
       struct WidgetType *W;
       struct OrbitType *O;
+      /* Body rate strip chart support */
+      static long First=1;
+      /* Store magnitude and components for optional future expansion */
+      #define BRATE_HISTORY 400 /* ~ last few seconds depending on frame rate */
+      static double wHist[BRATE_HISTORY];
+      static long wIndex=0;
+      static double wMax=0.0; /* autoscale tracking */
+      if (First) {
+         long k; for(k=0;k<BRATE_HISTORY;k++) wHist[k]=0.0; First=0; wIndex=0; wMax=1.0; }
+
+      /* Sample current body angular speed (rad/s) of POV host body */
+      {
+         struct SCType *SampS; struct BodyType *SampB; double magw;
+         SampS = &SC[POV.Host.SC];
+         SampB = &SampS->B[POV.Host.Body];
+         magw = sqrt(SampB->wn[0]*SampB->wn[0]+SampB->wn[1]*SampB->wn[1]+SampB->wn[2]*SampB->wn[2]);
+         wHist[wIndex] = magw;
+         wIndex = (wIndex+1)%BRATE_HISTORY;
+         if (magw > wMax) wMax = magw; /* track new max for autoscaling */
+         /* Gentle decay of max so scale adapts downward */
+         wMax *= 0.999; if (wMax < 1e-6) wMax = 1e-6; /* avoid zero */
+      }
 
       glMatrixMode(GL_PROJECTION);
       glPushMatrix();
@@ -5315,6 +5348,9 @@ void ReadGraphicsInpFile(void)
       OrreryWindowExists = DecodeString(response);
       fscanf(infile,"%s %[^\n] %[\n]",response,junk,&newline);
       SphereWindowExists = DecodeString(response);
+      /* Kinetic Energy Window flag (optional) */
+      fscanf(infile,"%s %[^\n] %[\n]",response,junk,&newline);
+      KEWindowExists = DecodeString(response);
 /* .. POV */
       fscanf(infile,"%[^\n] %[\n]",junk,&newline);
       fscanf(infile,"%s %[^\n] %[\n]",response,junk,&newline);

@@ -119,6 +119,15 @@ EXTERN GLuint LogoTexTag;
 EXTERN GLuint SphereSunSpriteTexTag;
 EXTERN GLuint SphereMoonSpriteTexTag;
 
+/* Kinetic Energy Plot Window Globals */
+EXTERN long KEWindowExists; /* flag from graphics input (GLUT only) */
+EXTERN long KEWindowWidth, KEWindowHeight;
+EXTERN char KEWindowTitle[40];
+EXTERN double *KETimeHist; /* time history */
+EXTERN double *KEHist;     /* energy history */
+EXTERN long KEHistN, KEHistAlloc;
+EXTERN double KEYMin, KEYMax; /* autoscale */
+
 EXTERN char StarCatFileName[80];
 EXTERN double BuckyPf[32][3];
 EXTERN long BuckyNeighbor[32][6];
@@ -229,6 +238,10 @@ void CamRenderExec(void);
 void DrawMap(void);
 void DrawOrrery(void);
 void DrawUnitSphere(void);
+void DrawRateWindow(void);
+void InitRateWindow(void);
+void InitKEWindow(void);
+void DrawKEWindow(void);
 void SetPovOrientation(void);
 void InitCamWidgets(void);
 void InitOrreryWidget(void);

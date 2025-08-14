@@ -193,6 +193,7 @@ void FindInterBodyDCMs(struct SCType *S);
 void FindPathVectors(struct SCType *S);
 void FindTotalAngMom(struct SCType *S);
 double FindTotalKineticEnergy(struct SCType *S);
+double FindRotationalKineticEnergy(struct SCType *S); /* Bodies only */
 void UpdateScBoundingBox(struct SCType *S);
 void FindUnshadedAreas(struct SCType *S, double DirVecN[3]);
 void RadBelt(float RadiusKm, float MagLatDeg, int NumEnergies, 

@@ -16,6 +16,18 @@
 #define EXTERN extern
 #include "42gl.h"
 #undef EXTERN
+
+/* Simple bitmap text renderer */
+static void DrawBitmapStringGL(float x, float y, const char *s)
+{
+   glRasterPos2f(x,y);
+   while (*s) glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*s++);
+}
+
+/* KE window forward decls */
+static void KEHistAppend(double t, double ke);
+void KEReshapeHandler(int width, int height);
+int KEWindow = 0; /* GLUT window id */
 #define EXTERN 
 #include "42glut.h"
 #undef EXTERN
@@ -84,6 +96,13 @@ void Idle(void)
             TimerHasExpired = 0;
             glutTimerFunc(TimerDuration,TimerHandler,0);
             Done = SimStep();
+            if (KEWindowExists) {
+               if (POV.Host.SC >=0 && POV.Host.SC < Nsc && SC[POV.Host.SC].Exists) {
+                  /* Body-only rotational kinetic energy */
+                  double ke = FindRotationalKineticEnergy(&SC[POV.Host.SC]);
+                  KEHistAppend(SimTime,ke);
+               }
+            }
             if (GLOutFlag) {
                glutSetWindow(CamWindow);
                CamRenderExec();
@@ -103,6 +122,11 @@ void Idle(void)
                   DrawUnitSphere();
                   glutSwapBuffers();
                }
+               if (KEWindowExists) {
+                  glutSetWindow(KEWindow);
+                  DrawKEWindow();
+                  glutSwapBuffers();
+               }
 
                glutPostRedisplay();
                if (CaptureCam) {
@@ -119,6 +143,141 @@ void Idle(void)
       }
 
       if (Done) exit(0);
+}
+/**********************************************************************/
+/* ================== KE Plot Window (GLUT) ====================== */
+static void KEHistAppend(double t, double ke)
+{
+   if (KEHistAlloc == 0) {
+      KEHistAlloc = 4096;
+      KETimeHist = (double*) malloc(KEHistAlloc*sizeof(double));
+      KEHist = (double*) malloc(KEHistAlloc*sizeof(double));
+      KEHistN = 0;
+      KEYMin =  1.0e300; KEYMax = -1.0e300; /* proper sentinel */
+   }
+   if (KEHistN >= KEHistAlloc) {
+      long newAlloc = KEHistAlloc*2;
+      KETimeHist = (double*) realloc(KETimeHist,newAlloc*sizeof(double));
+      KEHist = (double*) realloc(KEHist,newAlloc*sizeof(double));
+      KEHistAlloc = newAlloc;
+   }
+   KETimeHist[KEHistN] = t;
+   KEHist[KEHistN] = ke;
+   if (ke < KEYMin) KEYMin = ke;
+   if (ke > KEYMax) KEYMax = ke;
+   KEHistN++;
+}
+
+void InitKEWindow(void)
+{
+   KEWindowWidth = 480;
+   KEWindowHeight = 240;
+   strcpy(KEWindowTitle,"42 Rotational KE");
+   glutInitWindowSize(KEWindowWidth,KEWindowHeight);
+   KEWindow = glutCreateWindow(KEWindowTitle);
+   glClearColor(0.0,0.0,0.0,1.0);
+   glDisable(GL_LIGHTING);
+   glMatrixMode(GL_PROJECTION);
+   glLoadIdentity();
+   gluOrtho2D(0.0,(double)KEWindowWidth,0.0,(double)KEWindowHeight);
+   glMatrixMode(GL_MODELVIEW);
+   glutDisplayFunc(DrawKEWindow);
+   glutIdleFunc(Idle);
+   glutReshapeFunc(KEReshapeHandler);
+}
+
+void DrawKEWindow(void)
+{
+   long i;
+   if (!KEWindowExists) return;
+   glViewport(0,0,KEWindowWidth,KEWindowHeight);
+   glClear(GL_COLOR_BUFFER_BIT);
+   glMatrixMode(GL_PROJECTION);
+   glLoadIdentity();
+   gluOrtho2D(0.0,(double)KEWindowWidth,0.0,(double)KEWindowHeight);
+   glMatrixMode(GL_MODELVIEW);
+   glLoadIdentity();
+   if (KEHistN < 2) return;
+   double t0 = KETimeHist[0];
+   double t1 = KETimeHist[KEHistN-1];
+   double dt = t1 - t0; if (dt <= 0.0) dt = 1.0;
+   /* Fixed Y axis [0,0.5] per user request */
+   double yLo = 0.0; double yHi = 0.5; double yRange = yHi - yLo;
+   glColor3f(0.7f,0.7f,0.7f);
+   glBegin(GL_LINES);
+      glVertex2f(40.0f,20.0f); glVertex2f(40.0f,KEWindowHeight-20.0f);
+      glVertex2f(40.0f,20.0f); glVertex2f(KEWindowWidth-20.0f,20.0f);
+   glEnd();
+   /* Ticks and labels for fixed scale 0..0.5 */
+   glColor3f(0.5f,0.5f,0.5f);
+   glBegin(GL_LINES);
+   for (int ti=0; ti<=5; ti++) {
+      double val = 0.1*ti;
+      double yy = 20.0 + (val - yLo)/yRange * (KEWindowHeight-40.0);
+      glVertex2f(37.0f,(float)yy); glVertex2f(40.0f,(float)yy);
+   }
+   /* Exponential time ticks 50,100,200,... (last 3) */
+   double milestonesKE[32]; int NmKE=0;
+   for (double mv=50.0; mv <= t1+1.0e-9 && NmKE < 32; mv*=2.0) {
+      milestonesKE[NmKE++] = mv;
+   }
+   int startIdxKE = (NmKE > 3) ? (NmKE-3) : 0;
+   for (int mi=startIdxKE; mi < NmKE; mi++) {
+      double tt = milestonesKE[mi];
+      if (tt < t0) continue;
+      double xx = 40.0 + (tt - t0)/dt * (KEWindowWidth-60.0);
+      if (xx > 40.0 && xx < KEWindowWidth-20.0) {
+         glVertex2f((float)xx,20.0f); glVertex2f((float)xx,23.0f);
+      }
+   }
+   glEnd();
+   glColor3f(0.8f,0.8f,0.8f);
+   for (int ti=0; ti<=5; ti++) {
+      double val = 0.1*ti;
+      double yy = 20.0 + (val - yLo)/yRange * (KEWindowHeight-40.0);
+      char b[16]; snprintf(b,sizeof(b),"%.1f",val);
+   DrawBitmapStringGL(8.0f,(float)yy-4.0f,b);
+   }
+   for (int mi=startIdxKE; mi < NmKE; mi++) {
+      double tt = milestonesKE[mi];
+      if (tt < t0) continue;
+      double xx = 40.0 + (tt - t0)/dt * (KEWindowWidth-20.0);
+      if (xx > 40.0 && xx < KEWindowWidth-20.0) {
+         char b[32]; snprintf(b,sizeof(b),"%.0f",tt);
+         DrawBitmapStringGL((float)xx-18.0f,24.0f,b);
+      }
+   }
+   DrawBitmapStringGL(KEWindowWidth/2.0f-30.0f,2.0f,"Time (s)");
+   DrawBitmapStringGL(45.0f,KEWindowHeight-32.0f,"Rotational KE (J)");
+   /* Display latest value */
+   double last = KEHist[KEHistN-1];
+   char buf[64];
+   snprintf(buf,sizeof(buf),"KE=%.5f",last);
+   glColor3f(1.0f,1.0f,1.0f);
+   glRasterPos2f(KEWindowWidth-155.0f,KEWindowHeight-18.0f);
+   for(char *c=buf; *c; ++c) glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*c);
+   glColor3f(0.8f,0.8f,0.2f);
+   glBegin(GL_LINE_STRIP);
+   for(i=0;i<KEHistN;i++) {
+      double x = 40.0 + (KETimeHist[i]-t0)/dt * (KEWindowWidth-60.0);
+      double val = KEHist[i];
+      if (val < 0.0) val = 0.0; else if (val > 0.5) val = 0.5; /* clamp */
+      double y = 20.0 + (val - yLo)/yRange * (KEWindowHeight-40.0);
+      glVertex2f((float)x,(float)y);
+   }
+   glEnd();
+   glutPostRedisplay();
+}
+
+void KEReshapeHandler(int width, int height)
+{
+   KEWindowWidth = width;
+   KEWindowHeight = height;
+   glViewport(0,0,width,height);
+   glMatrixMode(GL_PROJECTION);
+   glLoadIdentity();
+   gluOrtho2D(0.0,(double)width,0.0,(double)height);
+   glMatrixMode(GL_MODELVIEW);
 }
 /**********************************************************************/
 /* Backspace = 0x08, Tab = 0x09, Line Feed = 0x0A */
@@ -1388,6 +1547,9 @@ int HandoffToGui(int argc, char **argv)
       }
       if (SphereWindowExists) {
          InitSphereWindow();
+      }
+      if (KEWindowExists) {
+         InitKEWindow();
       }
       
       /* Comment out when OpenGL installation is stable */
