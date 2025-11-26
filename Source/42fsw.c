@@ -15,7 +15,7 @@
 #include "42.h"
 
 void AcFsw(struct AcType *AC);
-#ifdef _AC_STANDALONE_
+// #ifdef _AC_STANDALONE_
 long FindInBufLen(struct AcType *AC);
 long FindOutBufLen(struct AcType *AC);
 long FindTblBufLen(struct AcType *AC);
@@ -24,7 +24,7 @@ void ReadAcOutFromSocket(struct AcType *AC,struct AcIpcType *I);
 void WriteAcTblToSocket(struct AcType *AC,struct AcIpcType *I);
 void WriteAcArraySizesToSocket(struct AcType *AC, struct AcIpcType *I);
 void WriteAcBufLensToSocket(struct AcIpcType *I);
-#endif
+// #endif
 
 /* #ifdef __cplusplus
 ** namespace _42 {
@@ -2019,6 +2019,245 @@ void RoverFSW(struct SCType *S)
       MxV(CBR,FcmdR,FcmdB);
 #endif
 }
+
+
+static size_t GetScSensorBufLen(struct SCType *S)
+{
+   size_t len = 0;
+   
+   len += sizeof(double);
+   len += S->Ngyro * (sizeof(double) + sizeof(double));                   /* Timestamp + Gyro data */
+   len += S->Nmag * (sizeof(double) + sizeof(double));                    /* Timestamp + Magnetometer data */
+   len += S->Ncss * (sizeof(double) + sizeof(long) + sizeof(double));     /* Timestamp + CSS Valid + Illum */
+   len += S->Nfss * (sizeof(double) + sizeof(long) + 2 * sizeof(double)); /* Timestamp + FSS Valid + Angle */
+   len += S->Nst * (sizeof(double) + sizeof(long) + 4 * sizeof(double));  /* Timestamp + Star Tracker Valid + Quaternion */
+   /* 
+    * GPS:
+    * Timestamp
+    * long Valid;
+    * long Rollover;
+    * long Week;
+    * double Sec;
+    * double PosN[3];
+    * double VelN[3];
+    * double PosW[3];
+    * double VelW[3];
+    * double Lng,Lat,Alt;
+    * double WgsLng,WgsLat,WgsAlt;
+    */
+   len += S->Ngps * (sizeof(double) + 3 * sizeof(long) + 19 * sizeof(double));
+   
+   return len;
+}
+
+
+static double fixTime(double t) {
+   /* Convert from 42 time (seconds since 2000-01-01) to UTC Time */
+   return t + 946728000.0 - 32.184 - 37.0;
+}
+
+
+void WriteScSensorsToSocket(struct SCType *S, struct AcIpcType *I) {
+   char *BufPtr = I->AcOutBuf;
+   char Ack[4] = "Ack\0";
+   long k, i;
+   double timestamp = fixTime(DynTime);
+
+   // Sim timestamp
+   memcpy(BufPtr, &timestamp, sizeof(double));
+   BufPtr += sizeof(double);
+
+   // Gyros
+   for (k = 0; k < S->Ngyro; k++) {
+      timestamp = fixTime(S->Gyro[k].lastSampleTime);
+      memcpy(BufPtr, &timestamp, sizeof(double)); BufPtr += sizeof(double);
+      memcpy(BufPtr, &S->Gyro[k].MeasRate, sizeof(double)); BufPtr += sizeof(double);
+   }
+   // Magnetometers
+   for (k = 0; k < S->Nmag; k++) {
+      timestamp = fixTime(S->MAG[k].lastSampleTime);
+      memcpy(BufPtr, &timestamp, sizeof(double)); BufPtr += sizeof(double);
+      memcpy(BufPtr, &S->MAG[k].Field, sizeof(double)); BufPtr += sizeof(double);
+   }
+   // CSS
+   for (k = 0; k < S->Ncss; k++) {
+      timestamp = fixTime(S->CSS[k].lastSampleTime);
+      memcpy(BufPtr, &timestamp, sizeof(double)); BufPtr += sizeof(double);
+      memcpy(BufPtr, &S->CSS[k].Valid, sizeof(long)); BufPtr += sizeof(long);
+      memcpy(BufPtr, &S->CSS[k].Illum, sizeof(double)); BufPtr += sizeof(double);
+   }
+   // FSS
+   for (k = 0; k < S->Nfss; k++) {
+      timestamp = fixTime(S->FSS[k].lastSampleTime);
+      memcpy(BufPtr, &timestamp, sizeof(double)); BufPtr += sizeof(double);
+      memcpy(BufPtr, &S->FSS[k].Valid, sizeof(long)); BufPtr += sizeof(long);
+      for (i = 0; i < 2; i++) {
+         memcpy(BufPtr, &S->FSS[k].SunAng[i], sizeof(double)); BufPtr += sizeof(double);
+      }
+   }
+   // Star Trackers
+   for (k = 0; k < S->Nst; k++) {
+      timestamp = fixTime(S->ST[k].lastSampleTime);
+      memcpy(BufPtr, &timestamp, sizeof(double)); BufPtr += sizeof(double);
+      memcpy(BufPtr, &S->ST[k].Valid, sizeof(long)); BufPtr += sizeof(long);
+      for (i = 0; i < 4; i++) {
+         memcpy(BufPtr, &S->ST[k].qn[i], sizeof(double)); BufPtr += sizeof(double);
+      }
+   }
+   // GPS
+   for (k = 0; k < S->Ngps; k++) {
+      timestamp = fixTime(S->GPS[k].lastSampleTime);
+      memcpy(BufPtr, &timestamp, sizeof(double)); BufPtr += sizeof(double);
+      memcpy(BufPtr, &S->GPS[k].Valid, sizeof(long)); BufPtr += sizeof(long);
+      memcpy(BufPtr, &S->GPS[k].Rollover, sizeof(long)); BufPtr += sizeof(long);
+      memcpy(BufPtr, &S->GPS[k].Week, sizeof(long)); BufPtr += sizeof(long);
+      memcpy(BufPtr, &S->GPS[k].Sec, sizeof(double)); BufPtr += sizeof(double);
+      for (i = 0; i < 3; i++) { 
+         memcpy(BufPtr, &S->PosN[i], sizeof(double)); 
+         BufPtr += sizeof(double);
+      }
+      for (i = 0; i < 3; i++) { 
+         memcpy(BufPtr, &S->VelN[i], sizeof(double)); 
+         BufPtr += sizeof(double);
+      }
+      for (i = 0; i < 3; i++) { 
+         memcpy(BufPtr, &S->GPS[k].PosW[i], sizeof(double)); 
+         BufPtr += sizeof(double);
+      }
+      for (i = 0; i < 3; i++) { 
+         memcpy(BufPtr, &S->GPS[k].VelW[i], sizeof(double)); 
+         BufPtr += sizeof(double);
+      }
+      memcpy(BufPtr, &S->GPS[k].Lng, sizeof(double)); BufPtr += sizeof(double);
+      memcpy(BufPtr, &S->GPS[k].Lat, sizeof(double)); BufPtr += sizeof(double);
+      memcpy(BufPtr, &S->GPS[k].Alt, sizeof(double)); BufPtr += sizeof(double);
+      memcpy(BufPtr, &S->GPS[k].WgsLng, sizeof(double)); BufPtr += sizeof(double);
+      memcpy(BufPtr, &S->GPS[k].WgsLat, sizeof(double)); BufPtr += sizeof(double);
+      memcpy(BufPtr, &S->GPS[k].WgsAlt, sizeof(double)); BufPtr += sizeof(double);
+   }
+
+   // Send buffer
+   write(I->Socket, I->AcOutBuf, I->AcOutBufLen);
+   read(I->Socket, Ack, 4);
+}
+
+
+void WriteScSensorCountsToSocket(struct SCType *S, struct AcIpcType *I) {
+   char Ack[4] = "Ack\0";
+   char buf[6 * sizeof(uint32_t)];
+   char *ptr = buf;
+   uint32_t Ngyro = S->Ngyro;
+   uint32_t Nmag = S->Nmag;
+   uint32_t Ncss = S->Ncss;
+   uint32_t Nfss = S->Nfss;
+   uint32_t Nst = S->Nst;
+   uint32_t Ngps = S->Ngps;
+   memcpy(ptr, &Ngyro, sizeof(uint32_t)); ptr += sizeof(uint32_t);
+   memcpy(ptr, &Nmag,  sizeof(uint32_t)); ptr += sizeof(uint32_t);
+   memcpy(ptr, &Ncss,  sizeof(uint32_t)); ptr += sizeof(uint32_t);
+   memcpy(ptr, &Nfss,  sizeof(uint32_t)); ptr += sizeof(uint32_t);
+   memcpy(ptr, &Nst,   sizeof(uint32_t)); ptr += sizeof(uint32_t);
+   memcpy(ptr, &Ngps,  sizeof(uint32_t)); ptr += sizeof(uint32_t);
+   printf("Writing sensor counts to socket: Ngyro=%u, Nmag=%u, Ncss=%u, Nfss=%u, Nst=%u, Ngps=%u\n",
+          Ngyro, Nmag, Ncss, Nfss, Nst, Ngps);
+   write(I->Socket, buf, sizeof(buf));
+   read(I->Socket, Ack, 4);
+}
+
+
+void WriteScSensorAxesToSocket(struct SCType *S, struct AcIpcType *I) {
+   char Ack[4] = "Ack\0";
+   char *BufPtr;
+   size_t len = 0;
+   long k, i;
+
+   len += S->Ngyro * 3 * sizeof(double); // Gyro axes
+   len += S->Nmag  * 3 * sizeof(double); // Mag axes
+   len += S->Ncss  * 3 * sizeof(double); // CSS axes
+   len += S->Nfss  * 4 * sizeof(double); // FSS Rotation Quaternion
+   len += S->Nst   * 4 * sizeof(double); // ST Rotation Quaternion
+
+   char *buf = (char *)calloc(len, 1);
+   BufPtr = buf;
+
+   // Gyro axes
+   for (k = 0; k < S->Ngyro; k++) {
+      for (i = 0; i < 3; i++) {
+         memcpy(BufPtr, &S->Gyro[k].Axis[i], sizeof(double)); BufPtr += sizeof(double);
+      }
+   }
+
+   // Magnetometer axes
+   for (k = 0; k < S->Nmag; k++) {
+      for (i = 0; i < 3; i++) {
+         memcpy(BufPtr, &S->MAG[k].Axis[i], sizeof(double)); BufPtr += sizeof(double);
+      }
+
+   }
+
+   // CSS axes
+   for (k = 0; k < S->Ncss; k++) {
+      for (i = 0; i < 3; i++) {
+         memcpy(BufPtr, &S->CSS[k].Axis[i], sizeof(double)); BufPtr += sizeof(double);
+      }
+   }
+
+   // FSS Rotation quaternion
+   for (k = 0; k < S->Nfss; k++) {
+      for (i = 0; i < 4; i++) {
+         memcpy(BufPtr, &S->FSS[k].qb[i], sizeof(double)); BufPtr += sizeof(double);
+      }
+   }
+
+   // Star Tracker Rotation quaternion
+   for (k = 0; k < S->Nst; k++) {
+      for (i = 0; i < 4; i++) {
+         memcpy(BufPtr, &S->ST[k].qb[i], sizeof(double)); BufPtr += sizeof(double);
+      }
+   }
+
+   write(I->Socket, buf, len);
+   read(I->Socket, Ack, 4);
+   free(buf);
+}
+
+
+static size_t GetAcBufLen(void)
+{
+   size_t len;
+   len = 3 * sizeof(double);  /* Magnetotorquers */
+   len += 3 * sizeof(double); /* Reaction wheels */
+   return len;
+}
+
+
+static void ReadActuatorsFromSocket(struct AcType *AC, struct AcIpcType *I) {
+   char Ack[4] = "Ack\0";
+
+   double Tcmd[3];
+   read(I->Socket, I->AcInBuf, I->AcInBufLen);
+   char *buf = I->AcInBuf;
+   double temp;
+   size_t sensIdx;
+
+   /* Magnetotorquers */
+   for (sensIdx = 0; sensIdx < 3; sensIdx++) {
+      memcpy(&temp, buf, sizeof(double));
+      buf += sizeof(double);
+      AC->MTB[sensIdx].Mcmd = temp;
+   }
+
+   /* Reaction Wheels */
+   for (sensIdx = 0; sensIdx < 3; sensIdx++) {
+      memcpy(&temp, buf, sizeof(double));
+      buf += sizeof(double);
+      AC->Whl[sensIdx].Tcmd = temp;
+   }
+
+   write(I->Socket, Ack, 4);
+}
+
+
 /**********************************************************************/
 /*  This function is called at the simulation rate.  Sub-sampling of  */
 /*  control loops is managed by FswSampleCounter.                     */
@@ -2028,15 +2267,45 @@ void RoverFSW(struct SCType *S)
 /**********************************************************************/
 void FlightSoftWare(struct SCType *S)
 {
-      #ifdef _AC_STANDALONE_
-      struct AcType *AC;
-      struct AcIpcType *I;
-      #endif
-            
+      struct AcType *AC = &S->AC;
+      struct AcIpcType *SensIpc = &S->SensIpc;
+      struct AcIpcType *ActIpc = &S->ActIpc;
+      static int calib = 0;
+
+      if (SensIpc->Init) {
+         SensIpc->Init = 0;
+         S->SensIpc.Port = 20001 + SC->ID;
+         S->SensIpc.Socket = InitSocketServer(SensIpc->Port,SensIpc->AllowBlocking);
+         SensIpc->AcOutBufLen = GetScSensorBufLen(S);
+         SensIpc->AcOutBuf = (char *) calloc(SensIpc->AcOutBufLen,sizeof(char));
+         WriteScSensorCountsToSocket(S,SensIpc);
+         WriteScSensorAxesToSocket(S,SensIpc);
+      }
+
+      if (ActIpc->Init) {
+         ActIpc->Init = 0;
+         ActIpc->Port = 30001 + SC->ID;
+         ActIpc->AcInBufLen = GetAcBufLen();
+         ActIpc->AcInBuf = calloc(ActIpc->AcInBufLen, sizeof(char));
+         ActIpc->Socket = InitSocketServer(ActIpc->Port,ActIpc->AllowBlocking);
+      }
+
+      if (calib == 1) {
+         printf("Writing calibration data to socket\n");
+         /* Calibration data */
+         WriteScSensorsToSocket(S,SensIpc);
+         calib = 0;
+         return;
+      }
+
       S->FswSampleCounter++;
       if (S->FswSampleCounter >= S->FswMaxCounter) {
          S->FswSampleCounter = 0;
-         
+
+         WriteScSensorsToSocket(S,SensIpc);
+
+         // sleep(1);
+
          switch(S->FswTag){
             case PASSIVE_FSW:
                break;
@@ -2069,34 +2338,15 @@ void FlightSoftWare(struct SCType *S)
                break;
             case CFS_FSW:
                #ifdef _AC_STANDALONE_
-               I = &S->AcIpc;
-               AC = &S->AC;
-               if (I->Init) {
-                  I->Init = 0;
-                  
-                  I->Port = 10001 + AC->ID;
-                  I->Socket = InitSocketServer(I->Port,I->AllowBlocking);
-                        
-                  WriteAcArraySizesToSocket(AC,I);
-                  
-                  I->AcInBufLen = FindInBufLen(AC);
-                  I->AcOutBufLen = FindOutBufLen(AC);
-                  I->AcTblBufLen = FindTblBufLen(AC);
-                  WriteAcBufLensToSocket(I);
-                  
-                  I->AcInBuf = (char *) calloc(I->AcInBufLen,sizeof(char));
-                  I->AcOutBuf = (char *) calloc(I->AcOutBufLen,sizeof(char));
-                  I->AcTblBuf = (char *) calloc(I->AcTblBufLen,sizeof(char));
-                  WriteAcTblToSocket(AC,I);
-
-               }
-               WriteAcInToSocket(AC,I);
-               ReadAcOutFromSocket(AC,I);
                #else
                   AcFsw(&S->AC);
                #endif
                break;
          }
+
+
+         // ReadAcOutFromSocket(AC,I);
+         ReadActuatorsFromSocket(AC, ActIpc);
          
       }
       

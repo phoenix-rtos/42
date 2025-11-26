@@ -206,6 +206,11 @@ void ReportEpoch(void)
       fclose(outfile);
 }
 /*********************************************************************/
+static double fixTime(double t) {
+   /* Convert from 42 time (seconds since 2000-01-01) to UTC Time */
+   return t + 946728000.0 - 32.184 - 37.0;
+}
+
 void Report(void)
 {
       static FILE *timefile;
@@ -223,6 +228,7 @@ void Report(void)
       static FILE *Thrfile;
       static FILE *AlbedoFile;
       static FILE *IllumFile;
+      static FILE *stateFile, *stFile;
       //static FILE *ProjAreaFile;
       static FILE *AccFile;
       static FILE *GpsFile;
@@ -272,13 +278,21 @@ void Report(void)
             }
          }
          PosNfile = FileOpen(InOutPath,"PosN.42","w");
+         fprintf(PosNfile,"T,X,Y,Z\n");
          VelNfile = FileOpen(InOutPath,"VelN.42","w");
+         fprintf(VelNfile,"T,X,Y,Z\n");
          PosWfile = FileOpen(InOutPath,"PosW.42","w");
          VelWfile = FileOpen(InOutPath,"VelW.42","w");
          PosRfile = FileOpen(InOutPath,"PosR.42","w");
          VelRfile = FileOpen(InOutPath,"VelR.42","w");
          qbnfile = FileOpen(InOutPath,"qbn.42","w");
+         fprintf(qbnfile,"T,q0,q1,q2,q3\n");
+         stateFile = FileOpen(InOutPath, "state.42", "w");
+         fprintf(stateFile, "T,q0,q1,q2,q3,bwx,bwy,bwz,rx,ry,rz,vx,vy,vz\n");
+         stFile = FileOpen(InOutPath, "st.42", "w");
+         fprintf(stFile,"T,q0,q1,q2,q3\n");
          wbnfile = FileOpen(InOutPath,"wbn.42","w");
+         fprintf(wbnfile,"T,X,Y,Z\n");
          Hvnfile = FileOpen(InOutPath,"Hvn.42","w");
          Hvbfile = FileOpen(InOutPath,"Hvb.42","w");
          svnfile = FileOpen(InOutPath,"svn.42","w");
@@ -312,6 +326,13 @@ void Report(void)
          ReportEpoch();
       }
 
+      fprintf(stateFile, "%ld,%.40le,%.40le,%.40le,%.40le,%.40le,%.40le,%.40le,%.40le,%.40le,%.40le,%.40le,%.40le,%.40le\n",
+         (long)(fixTime(DynTime)*1e6),
+         SC[0].B[0].qn[3], SC[0].B[0].qn[0], SC[0].B[0].qn[1], SC[0].B[0].qn[2],
+         SC[0].Gyro[0].Bias,SC[0].Gyro[1].Bias,SC[0].Gyro[2].Bias,
+         SC[0].PosN[0], SC[0].PosN[1], SC[0].PosN[2],
+         SC[0].VelN[0], SC[0].VelN[1], SC[0].VelN[2]);
+
       if (OutFlag) {
          fprintf(timefile,"%lf\n",SimTime);
          for(Isc=0;Isc<Nsc;Isc++) {
@@ -336,14 +357,10 @@ void Report(void)
             }
          }
          if (SC[0].Exists) {
-            fprintf(PosNfile,"%le %le %le  %le %le %le  %le %le %le\n",
-               SC[0].PosN[0],SC[0].PosN[1],SC[0].PosN[2],
-               Orb[0].PosN[0],Orb[0].PosN[1],Orb[0].PosN[2],
-               Rgn[1].PosN[0],Rgn[1].PosN[1],Rgn[1].PosN[2]);
-            fprintf(VelNfile,"%le %le %le  %le %le %le  %le %le %le\n",
-               SC[0].VelN[0],SC[0].VelN[1],SC[0].VelN[2],
-               Orb[0].VelN[0],Orb[0].VelN[1],Orb[0].VelN[2],
-               Rgn[1].VelN[0],Rgn[1].VelN[1],Rgn[1].VelN[2]);
+            fprintf(PosNfile,"%ld,%le,%le,%le\n",
+               (long)(fixTime(DynTime)*1e6),SC[0].PosN[0],SC[0].PosN[1],SC[0].PosN[2]);
+            fprintf(VelNfile,"%ld,%le,%le,%le\n",
+               (long)(fixTime(DynTime)*1e6),SC[0].VelN[0],SC[0].VelN[1],SC[0].VelN[2]);
             W = &World[Orb[SC[0].RefOrb].World];
             WorldAngVel[0] = 0.0;
             WorldAngVel[1] = 0.0;
@@ -370,10 +387,12 @@ void Report(void)
                fprintf(VelRfile,"%le %le %le\n",
                   SC[0].VelR[0],SC[0].VelR[1],SC[0].VelR[2]);
             //}
-            fprintf(qbnfile,"%le %le %le %le\n",
-               SC[0].B[0].qn[0],SC[0].B[0].qn[1],SC[0].B[0].qn[2],SC[0].B[0].qn[3]);
-            fprintf(wbnfile,"%le %le %le\n",
-               SC[0].B[0].wn[0],SC[0].B[0].wn[1],SC[0].B[0].wn[2]);
+            fprintf(qbnfile,"%ld,%.40le,%.40le,%.40le,%.40le\n",
+               (long)(fixTime(DynTime)*1e6),SC[0].B[0].qn[3],SC[0].B[0].qn[0],SC[0].B[0].qn[1],SC[0].B[0].qn[2]);
+            fprintf(wbnfile,"%ld,%.40le,%.40le,%.40le\n",
+               (long)(fixTime(DynTime)*1e6),SC[0].B[0].wn[0],SC[0].B[0].wn[1],SC[0].B[0].wn[2]);
+            fprintf(stFile,"%le,%.80le,%.80le,%.80le,%.80le\n",
+               fixTime(DynTime),SC[0].ST[0].qn[3],SC[0].ST[0].qn[0],SC[0].ST[0].qn[1],SC[0].ST[0].qn[2]);
             fprintf(Hvnfile,"%18.12le %18.12le %18.12le\n",
                SC[0].Hvn[0],SC[0].Hvn[1],SC[0].Hvn[2]);
             fprintf(Hvbfile,"%18.12le %18.12le %18.12le\n",
@@ -421,7 +440,6 @@ void Report(void)
                fprintf(IllumFile,"\n");
                fprintf(AlbedoFile,"\n");
             }
-            
             //RV2Eph(DynTime,Orb[0].mu,SC[0].PosN,SC[0].VelN,
             //   &SMA,&ecc,&inc,&RAAN,&ArgP,&anom,&tp,&SLR,&alpha,&rmin,
             //   &MeanMotion,&Period);
@@ -448,12 +466,6 @@ void Report(void)
       
       /* An example how to call specialized reporting based on sim case */
       /* if (!strcmp(InOutPath,"./Potato/")) PotatoReport(); */
-      
-
-      if (CleanUpFlag) {
-         fclose(timefile);
-      }
-
 }
 
 /* #ifdef __cplusplus

@@ -63,7 +63,7 @@ void Environment(struct SCType *S)
          S->bvn[2] = 0.0;
       }
 
-      MxV(S->B[0].CN,S->bvn,S->bvb);
+      QxV(S->qn, S->bvn, S->bvb);
 
 /* .. Atmospheric Density */
       if (O->World == EARTH) {

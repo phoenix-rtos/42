@@ -464,7 +464,7 @@ struct AcType {
    struct CmdType Cmd;
 };
 
-#if _AC_STANDALONE_
+// #if _AC_STANDALONE_
 #ifdef _WIN32
    #include <winsock2.h>
 #else
@@ -490,7 +490,7 @@ struct AcIpcType {
    char *AcTblBuf;
    long AcTblBufLen;
 };
-#endif
+// #endif
 
 /*
 ** #ifdef __cplusplus

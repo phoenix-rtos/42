@@ -34,11 +34,14 @@
 ** #endif
 */
 
+#include <stdlib.h>
+
+
 int exec(int argc,char **argv);
 
 int main(int argc,char **argv)
 {
-      return(exec(argc,argv));
+      exit(exec(argc,argv));
 }
 
 /*

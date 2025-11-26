@@ -456,6 +456,23 @@ double FindTotalKineticEnergy(struct SCType *S)
       return(KE);
 }
 /**********************************************************************/
+/* Body-only rotational kinetic energy (excludes wheels & translation) */
+double FindRotationalKineticEnergy(struct SCType *S)
+{
+   double KE = 0.0;
+   struct BodyType *B;
+   double Iw[3];
+   long Ib;
+
+   for (Ib = 0; Ib < S->Nb; Ib++) {
+      B = &S->B[Ib];
+      MxV(B->I,B->wn,Iw);
+      KE += 0.5*VoV(B->wn,Iw);
+   }
+
+   return KE;
+}
+/**********************************************************************/
 void FindBodyPathDCMs(struct SCType *S)
 {
       struct DynType *D;

@@ -2889,10 +2889,13 @@ void InitSpacecraft(struct SCType *S)
       
       InitAC(S);
 
-      #if _AC_STANDALONE_
-      S->AcIpc.Init = 1;
-      S->AcIpc.AllowBlocking = 1;
-      #endif
+      // #if _AC_STANDALONE_
+      S->SensIpc.Init = 1;
+      S->SensIpc.AllowBlocking = 1;
+
+      S->ActIpc.Init = 1;
+      S->ActIpc.AllowBlocking = 1;
+      // #endif
       
       InitShakers(S);
       

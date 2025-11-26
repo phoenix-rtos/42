@@ -13,6 +13,7 @@
 
 
 #include "envkit.h"
+#include "timekit.h"
 
 /* #ifdef __cplusplus
 ** namespace Kit {
@@ -235,6 +236,7 @@ void GLGM2(const char *ModelPath, long N, long M, double mass, double pbn[3],
       MTxV(CEN,Fe,FgeoN);
 }
 /**********************************************************************/
+extern struct DateType UTC;
 /*  IGRF Magnetic field model                                      *  */
 void IGRFMagField(const char *ModelPath, long N, long M, double pbn[3],double PriMerAng,
              double MagVecN[3])
@@ -255,8 +257,8 @@ void IGRFMagField(const char *ModelPath, long N, long M, double pbn[3],double Pr
 
       if (First) {
          First = 0;
-         /* Get data from IGRF20.txt */
-         IGRFfile = FileOpen(ModelPath,"igrf20.txt","r");
+         /* Get data from IGRF25.txt */
+         IGRFfile = FileOpen(ModelPath,"igrf25.txt","r");
          fscanf(IGRFfile,"%[^\n] %[\n]",junk,&newline);
          fscanf(IGRFfile,"%lf %lf %lf",
                 &dum1,&Re,&dum2);
@@ -279,7 +281,10 @@ void IGRFMagField(const char *ModelPath, long N, long M, double pbn[3],double Pr
          }
       }
 
-      SimpRot(AXIS,PriMerAng,CEN);
+      double C_W_TETE[3][3],C_TEME_TETE[3][3],C_TETE_J2000[3][3];
+      SimpleEarthPrecNute(UTC.JulDay,C_TEME_TETE,C_TETE_J2000);
+      SimpRot(AXIS,PriMerAng,C_W_TETE);
+      MxM(C_W_TETE,C_TETE_J2000,CEN);
 
 /*    Transform p to spherical coords in Earth frame */
       MxV(CEN,pbn,pbe);
@@ -305,10 +310,10 @@ void IGRFMagField(const char *ModelPath, long N, long M, double pbn[3],double Pr
 
       MTxV(CEN,BVE,MagVecN);
 
-      /*printf("r,phi,theta: %lf %lf %lf\n",r,phi,theta);
-      **printf("Br,Bth,Bph: %lf %lf %lf\n",Br,Bth,Bph);
-      **printf("BVE: %lf %lf %lf\n\n",BVE[0],BVE[1],BVE[2]);
-      */
+      // printf("r,phi,theta: %lf %lf %lf\n",r,phi,theta);
+      // printf("Br,Bth,Bph: %lf %lf %lf\n",Br,Bth,Bph);
+      // printf("BVE: %lf %lf %lf\n\n",BVE[0],BVE[1],BVE[2]);
+     
 }
 /**********************************************************************/
 /*  Computes planetary dipole magnetic field vector at S/C position.  */
