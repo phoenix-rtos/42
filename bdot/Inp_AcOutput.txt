@@ -1,0 +1,16 @@
+<<<<<<<<<<<<<<<<<<  AC Outputs for 42  >>>>>>>>>>>>>>>>>>>
+TRUE  0.1   ! Ac Tlm Enabled, Interval
+TRUE  0.1   ! AcG Tlm Enabled, Interval
+TRUE  0.1   ! Ac_GCmd Tlm Enabled, Interval
+TRUE  0.1   ! AcGyro Tlm Enabled, Interval
+TRUE  0.1   ! AcMAG Tlm Enabled, Interval
+TRUE  0.1   ! AcCSS Tlm Enabled, Interval
+TRUE  0.1   ! AcFSS Tlm Enabled, Interval
+TRUE  0.1   ! AcST Tlm Enabled, Interval
+TRUE  0.1   ! AcGPS Tlm Enabled, Interval
+TRUE  0.1   ! AcAccel Tlm Enabled, Interval
+TRUE  0.1   ! AcWhl Tlm Enabled, Interval
+TRUE  0.1   ! AcMTB Tlm Enabled, Interval
+TRUE  0.1   ! AcThr Tlm Enabled, Interval
+TRUE  0.1   ! AcCmd Tlm Enabled, Interval
+

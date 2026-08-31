@@ -77,15 +77,16 @@ long AdvanceTime(void)
       static long itime = 0;
       static long PrevTick = 0;
       static long CurrTick = 1;
+      static long StepCounter = 0;
       long Done;
       struct timespec SleepDuration;
 
       /* Advance time to next Timestep */
       switch (TimeMode) {
          case FAST_TIME :
-            SimTime += DTSIM;
-            itime = (long) ((SimTime+0.5*DTSIM)/(DTSIM));
-            SimTime = ((double) itime)*DTSIM;
+            StepCounter++;
+            itime = StepCounter;
+            SimTime = ((double) StepCounter) * DTSIM;
             DynTime = DynTime0 + SimTime;
 
             AtomicTime = DynTime - 32.184; /* TAI */
@@ -194,7 +195,7 @@ long AdvanceTime(void)
       }
 
       /* Check for end of run */
-      if (SimTime > STOPTIME) Done = 1;
+      if ((STOPTIME != 0.0) && (SimTime > STOPTIME)) Done = 1;
       else Done = 0;
 
       return(Done);
@@ -345,7 +346,7 @@ long SimStep(void)
             }
          }
          CommLinkPerformance();
-         Report();  /* File Output */
+         // Report();
       }
 
       ReportProgress();
@@ -379,7 +380,7 @@ long SimStep(void)
          }
       }
       CommLinkPerformance();
-      Report();  /* File Output */
+      // Report();  /* File Output */
 
       /* Exit when Stoptime is reached */
       if (SimComplete) {
@@ -440,6 +441,7 @@ int exec(int argc,char **argv)
       printf("Fwd Substitution Time = %lf sec\n",SubstTime);
       printf("Solve Time = %lf sec\n",SolveTime);
 */
+      fflush(NULL);
       return(0);
 }
 

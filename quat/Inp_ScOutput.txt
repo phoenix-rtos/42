@@ -1,0 +1,9 @@
+<<<<<<<<<<<<<<<<<<  SC Outputs for 42  >>>>>>>>>>>>>>>>>>>
+FALSE  0.1   ! Sc Tlm Enabled, Interval
+FALSE  0.1   ! ScB Tlm Enabled, Interval
+FALSE  0.1   ! ScG Tlm Enabled, Interval
+FALSE  0.1   ! ScGN Tlm Enabled, Interval
+FALSE  0.1   ! ScWhl Tlm Enabled, Interval
+FALSE  0.1   ! ScGyro Tlm Enabled, Interval
+FALSE  0.1   ! ScShaker Tlm Enabled, Interval
+

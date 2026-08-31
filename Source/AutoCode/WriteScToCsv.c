@@ -276,11 +276,7 @@ void WriteScWhlToCsv(void)
                else sprintf(FileName,"ScWhl%02ld.csv",Isc);
                outfile[Isc] = FileOpen(InOutPath,FileName,"w");
 
-               fprintf(outfile[Isc],"ScWhl_Time");
-               for(k=0;k<S->Nw;k++) {
-                  fprintf(outfile[Isc],",Sc_Whl%ld_H",k+1);
-               }
-               fprintf(outfile[Isc],"\n");
+               fprintf(outfile[Isc],"T,X,Y,Z\n");
             }
          }
       }

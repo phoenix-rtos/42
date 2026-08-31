@@ -390,6 +390,11 @@ struct GyroType {
    double AngNoiseCoef;
    double CorrCoef; /* Correlation Coef, exp(-SampleTime/BiasTime) */
 
+   /* First-Order Gauss-Markov Parameters */
+   // double BiasTimeConstant; /* Time constant (tau), sec */
+   // double BiasSteadyState; /* Steady-state bias RMS, rad/sec */
+   // double BiasGMCoef; /* sqrt(1-exp(-2*dt/tau)) coefficient */
+
    /*~ Outputs ~*/
    double TrueRate; /* rad/sec [~>~] */
 
@@ -398,6 +403,7 @@ struct GyroType {
    double Bias; /* rad/sec */
    double Angle; /* rad */
    double MeasRate; /* rad/sec */
+   double lastSampleTime; /* Last sample time, sec */
 };
 
 struct MagnetometerType {
@@ -415,6 +421,7 @@ struct MagnetometerType {
    double Field; /* Magfield Component, Tesla [~>~] */
 
    /*~ Internal Variables ~*/
+   double lastSampleTime; /* Last sample time, sec */
    long SampleCounter;
 };
 
@@ -435,6 +442,7 @@ struct CssType {
    double Illum; /* Units defined by scale [~>~] */
 
    /*~ Internal Variables ~*/
+   double lastSampleTime; /* Last sample time, sec */
    long SampleCounter;
    double Albedo; /* [0.0:1.0] */
 };
@@ -458,6 +466,7 @@ struct FssType {
    double SunAng[2]; /* [~>~] */
 
    /*~ Internal Variables ~*/
+   double lastSampleTime; /* Last sample time, sec */
    long SampleCounter;
    double SunVecS[3];
    double SunVecB[3];
@@ -492,6 +501,7 @@ struct StarTrackerType {
    double qn[4]; /* [~>~] */
 
    /*~ Internal Variables ~*/
+   double lastSampleTime; /* Last sample time, sec */
    long SampleCounter;
 };
 
@@ -515,6 +525,7 @@ struct GpsType {
    double VelW[3]; /* [~>~] */
 
    /*~ Internal Variables ~*/
+   double lastSampleTime; /* Last sample time, sec */
    long SampleCounter;
    double Lng,Lat,Alt; /* Geocentric */
    double WgsLng,WgsLat,WgsAlt; /* Geodetic, WGS-84 */
@@ -537,6 +548,7 @@ struct AccelType {
    double TrueAcc; /* m/s^2 [~>~] */
 
    /*~ Internal Variables ~*/
+   double lastSampleTime; /* Last sample time, sec */
    double AccumAccN[3];
    double Bias; /* m/s^2 */
    double PrevVelN[3]; /* m/s */
@@ -606,6 +618,7 @@ struct FgsType {
    double Vr; /* Guide Star in Fr */
 
    /*~ Internal Variables ~*/
+   double lastSampleTime; /* Last sample time, sec */
    long SampleCounter;
    long Valid;
    double StarVecR[3];
@@ -817,9 +830,10 @@ struct SCType {
    struct FgsType *Fgs;          /* [*Nfgs*] */
    struct ShakerType *Shaker;    /* [*Nsh*] */
    
-   #ifdef _AC_STANDALONE_
-   struct AcIpcType AcIpc;
-   #endif
+   // #ifdef _AC_STANDALONE_
+   struct AcIpcType SensIpc;
+   struct AcIpcType ActIpc;
+   // #endif
 };
 
 struct TargetType {

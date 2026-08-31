@@ -43,6 +43,16 @@ void AccelerometerModel(struct SCType *S)
       long i;
       long Ia;
       double PrevBias;
+      static struct RandomProcessType **AccelNoise;
+      static long First = 1;
+
+      if (First) {
+         First = 0;
+         AccelNoise = (struct RandomProcessType **) calloc(sizeof(struct RandomProcessType *), S->Nacc);
+         for(i=0;i<S->Nacc;i++) {
+            AccelNoise[i] = CreateRandomProcess(RngSeed + 1 + i);
+         }
+      }
 
       for(Ia=0;Ia<S->Nacc;Ia++) { 
          A = &S->Accel[Ia];
@@ -50,6 +60,7 @@ void AccelerometerModel(struct SCType *S)
          for(i=0;i<3;i++) A->AccumAccN[i] += S->AccN[i]*DTSIM;
          A->SampleCounter++; 
          if (A->SampleCounter >= A->MaxCounter) {
+            A->lastSampleTime = DynTime;
             A->SampleCounter = 0;
             B = &S->B[0];
             N = &B->Node[A->Node];
@@ -87,14 +98,14 @@ void AccelerometerModel(struct SCType *S)
             A->TrueAcc = AvgAcc + AccGG;          
                          
             PrevBias = A->CorrCoef*A->Bias;
-            A->Bias = PrevBias + A->BiasStabCoef*GaussianRandom(RNG);
-            A->AccError = 0.5*(A->Bias+PrevBias) + A->DVRWCoef*GaussianRandom(RNG);
+            A->Bias = PrevBias + A->BiasStabCoef*GaussianRandom(AccelNoise[Ia]);
+            A->AccError = 0.5*(A->Bias+PrevBias) + A->DVRWCoef*GaussianRandom(AccelNoise[Ia]);
          
             A->MeasAcc = Limit(A->Scale*A->TrueAcc + A->AccError,
                -A->MaxAcc,A->MaxAcc); 
          
             A->DV = A->MeasAcc*A->SampleTime 
-               + A->DVNoiseCoef*GaussianRandom(RNG);
+               + A->DVNoiseCoef*GaussianRandom(AccelNoise[Ia]);
          
             A->Counts = (long) (A->DV/A->SampleTime/A->Quant+0.5);
 
@@ -114,6 +125,17 @@ void GyroModel(struct SCType *S)
       double Axis[3];
       double PrevBias,RateError,PrevAngle;
       long Counts,PrevCounts;
+      static struct RandomProcessType **GyroNoise;
+      static long First = 1;
+      static FILE *gyro;
+
+      if (First) {
+         First = 0;
+         GyroNoise = (struct RandomProcessType **) calloc(sizeof(struct RandomProcessType *), S->Ngyro);
+         for(Ig=0;Ig<S->Ngyro;Ig++) {
+            GyroNoise[Ig] = CreateRandomProcess(RngSeed + 100 + Ig);
+         }
+      }
       
       for(Ig=0;Ig<S->Ngyro;Ig++) {
          G = &S->Gyro[Ig];
@@ -127,15 +149,15 @@ void GyroModel(struct SCType *S)
             G->TrueRate = VoV(N->AngVelB,Axis);
             
             PrevBias = G->CorrCoef*G->Bias;
-            G->Bias = PrevBias + G->BiasStabCoef*GaussianRandom(RNG);
-            RateError = 0.5*(G->Bias+PrevBias) + G->ARWCoef*GaussianRandom(RNG);
+            G->Bias = PrevBias + G->BiasStabCoef*GaussianRandom(GyroNoise[Ig]);
+            RateError = 0.5*(G->Bias+PrevBias) + G->ARWCoef*GaussianRandom(GyroNoise[Ig]);
          
             G->MeasRate = Limit(G->Scale*G->TrueRate + RateError,
                -G->MaxRate,G->MaxRate);
          
             PrevAngle = G->Angle;
             G->Angle = PrevAngle + G->MeasRate*G->SampleTime 
-               + G->AngNoiseCoef*GaussianRandom(RNG);
+               + G->AngNoiseCoef*GaussianRandom(GyroNoise[Ig]);
          
             PrevCounts = (long) (PrevAngle/G->Quant+0.5);
             Counts = (long) (G->Angle/G->Quant+0.5);
@@ -143,6 +165,7 @@ void GyroModel(struct SCType *S)
             G->MeasRate = ((double) (Counts - PrevCounts))*G->Quant/G->SampleTime;
             
             S->AC.Gyro[Ig].Rate = G->MeasRate;
+            G->lastSampleTime = DynTime;
          }
       }
 }
@@ -152,16 +175,26 @@ void MagnetometerModel(struct SCType *S)
       struct MagnetometerType *MAG;
       long Counts,Imag;
       double Signal;
+      static struct RandomProcessType **MagNoise;
+      static long First = 1;
+
+      if (First) {
+         First = 0;
+         MagNoise = (struct RandomProcessType **) calloc(sizeof(struct RandomProcessType *), S->Nmag);
+         for(Imag=0;Imag<S->Nmag;Imag++) {
+            MagNoise[Imag] = CreateRandomProcess(RngSeed + 220 + Imag);
+         }
+      }
       
       for(Imag=0;Imag<S->Nmag;Imag++) {
          MAG = &S->MAG[Imag];
          
          MAG->SampleCounter++;
          if (MAG->SampleCounter >= MAG->MaxCounter) {
+            MAG->lastSampleTime = DynTime;
             MAG->SampleCounter = 0;
-            
             Signal = MAG->Scale*VoV(S->bvb,MAG->Axis) 
-               + MAG->Noise*GaussianRandom(RNG);
+               + MAG->Noise*GaussianRandom(MagNoise[Imag]);
             Signal = Limit(Signal,-MAG->Saturation,MAG->Saturation); 
             Counts = (long) (Signal/MAG->Quant+0.5);
             MAG->Field = ((double) Counts)*MAG->Quant;
@@ -169,6 +202,9 @@ void MagnetometerModel(struct SCType *S)
             S->AC.MAG[Imag].Field = MAG->Field;
          }
       }
+      // printf("ECI POS: %.10lf %.10lf %.10lf\n", S->PosN[0],S->PosN[1],S->PosN[2]);
+      // printf("Mag field ECI: %lf %lf %lf\n", 
+      //    S->bvn[0]*1e9,S->bvn[1]*1e9,S->bvn[2]*1e9);
 }
 /**********************************************************************/
 /* This model credit Paul McKee, summer intern 2018                   */
@@ -185,6 +221,7 @@ void CssModel(struct SCType *S)
          
          CSS->SampleCounter++;
          if (CSS->SampleCounter >= CSS->MaxCounter) {
+            CSS->lastSampleTime = DynTime;
             CSS->SampleCounter = 0;
         
             if (S->Eclipse) {
@@ -229,7 +266,7 @@ void CssModel(struct SCType *S)
 void FssModel(struct SCType *S)
 {
       struct FssType *FSS;
-      static struct RandomProcessType *FssNoise;
+      static struct RandomProcessType **FssNoise;
       double svs[3],SunAng[2],Signal;
       long Counts;
       static long First = 1;
@@ -237,21 +274,28 @@ void FssModel(struct SCType *S)
       
       if (First) {
          First = 0;
-         FssNoise = CreateRandomProcess(10);
+         FssNoise = (struct RandomProcessType **) calloc(sizeof(struct RandomProcessType *), S->Nfss);
+         for(Ifss=0;Ifss<S->Nfss;Ifss++) {
+            FssNoise[Ifss] = CreateRandomProcess(RngSeed + 300 + Ifss);
+         }
       }
-      
+
       for(Ifss=0;Ifss<S->Nfss;Ifss++) {
          FSS = &S->FSS[Ifss];
          
          FSS->SampleCounter++;
          if (FSS->SampleCounter >= FSS->MaxCounter) {
+            FSS->lastSampleTime = DynTime;
             FSS->SampleCounter = 0;
          
             if (S->Eclipse) {
+
+            // if (SimTime >= 1000.0 && SimTime < 1200.0) {
                FSS->Valid = FALSE;
             }
             else {
                MxV(FSS->CB,S->svb,svs);
+               // QxV(FSS->qb,S->svb,svs);
                SunAng[0] = atan2(svs[FSS->H_Axis],svs[FSS->BoreAxis]);
                SunAng[1] = atan2(svs[FSS->V_Axis],svs[FSS->BoreAxis]);
                if (fabs(SunAng[0]) < FSS->FovHalfAng[0] && 
@@ -266,7 +310,7 @@ void FssModel(struct SCType *S)
             
             if (FSS->Valid) {
                for(i=0;i<2;i++) {
-                  Signal = SunAng[i] + FSS->NEA*GaussianRandom(FssNoise);
+                  Signal = SunAng[i] + FSS->NEA*GaussianRandom(FssNoise[Ifss]);
                   Counts = (long) (Signal/FSS->Quant+0.5);
                   FSS->SunAng[i] = ((double) Counts)*FSS->Quant;
                }
@@ -287,7 +331,7 @@ void StarTrackerModel(struct SCType *S)
 {
       struct StarTrackerType *ST;
       struct NodeType *N;
-      static struct RandomProcessType *StNoise;
+      static struct RandomProcessType **StNoise;
       struct WorldType *W;
       double qsn[4],Qnoise[4];
       double BoS,OrbRad,LimbAng,NadirVecB[3],BoN;
@@ -298,7 +342,10 @@ void StarTrackerModel(struct SCType *S)
       
       if (First) {
          First = 0;
-         StNoise = CreateRandomProcess(1);
+         StNoise = (struct RandomProcessType **) calloc(sizeof(struct RandomProcessType *), S->Nst);
+         for(Ist=0;Ist<S->Nst;Ist++) {
+            StNoise[Ist] = CreateRandomProcess(RngSeed + 400 + Ist);
+         }
       }
       
       for(Ist=0;Ist<S->Nst;Ist++) {
@@ -306,6 +353,7 @@ void StarTrackerModel(struct SCType *S)
          
          ST->SampleCounter++;
          if (ST->SampleCounter >= ST->MaxCounter) {
+            ST->lastSampleTime = DynTime;
             ST->SampleCounter = 0;
             N = &S->B[0].Node[ST->Node];
          
@@ -329,15 +377,20 @@ void StarTrackerModel(struct SCType *S)
                BoM = VoV(ST->CB[ST->BoreAxis],mvb);
                if (BoM > cos(LimbAng+ST->MoonExclAng)) ST->Valid = FALSE;
             }
+            ST->Valid = TRUE;
             if (ST->Valid) {
                QxQ(ST->qb,N->qb,qsb);
                QxQ(qsb,S->B[0].qn,qsn);
                /* Add Noise in ST frame */
-               for(i=0;i<3;i++) Qnoise[i] = 0.5*ST->NEA[i]*GaussianRandom(StNoise);
+               for(i=0;i<3;i++) Qnoise[i] = 0.5*ST->NEA[i]*GaussianRandom(StNoise[Ist]);
                Qnoise[3] = 1.0;
                UNITQ(Qnoise);
                QxQ(Qnoise,qsn,ST->qn);
             }
+            /* Testing: make star tracker invalid between 300-900 seconds */
+            // if (SimTime >= 2500.0) {
+               // ST->Valid = FALSE;
+            // }
             
             S->AC.ST[Ist].Valid = ST->Valid;
             for(i=0;i<4;i++) {
@@ -350,14 +403,17 @@ void StarTrackerModel(struct SCType *S)
 void GpsModel(struct SCType *S)
 {
       struct GpsType *GPS;
-      static struct RandomProcessType *GpsNoise;
+      static struct RandomProcessType **GpsNoise;
       double PosW[3],MagPosW;
       long Ig,i;
       static long First = 1;
       
       if (First) {
          First = 0;
-         GpsNoise = CreateRandomProcess(2);
+         GpsNoise = (struct RandomProcessType **) calloc(sizeof(struct RandomProcessType *), S->Ngps);
+         for(Ig=0;Ig<S->Ngps;Ig++) {
+            GpsNoise[Ig] = CreateRandomProcess(RngSeed + 500 + Ig);
+         }
       }
       
       if (Orb[S->RefOrb].World == EARTH) {
@@ -366,17 +422,18 @@ void GpsModel(struct SCType *S)
             
             GPS->SampleCounter++;
             if (GPS->SampleCounter >= GPS->MaxCounter) {
+               GPS->lastSampleTime = DynTime;
                GPS->SampleCounter = 0;
                
                GPS->Valid = TRUE;
          
                GPS->Rollover = GpsRollover;
                GPS->Week = GpsWeek;
-               GPS->Sec = GpsSecond + GPS->TimeNoise*GaussianRandom(GpsNoise);
+               GPS->Sec = GpsSecond + GPS->TimeNoise*GaussianRandom(GpsNoise[Ig]);
       
                for(i=0;i<3;i++) {
-                  GPS->PosN[i] = S->PosN[i] + GPS->PosNoise*GaussianRandom(GpsNoise);
-                  GPS->VelN[i] = S->VelN[i] + GPS->VelNoise*GaussianRandom(GpsNoise);
+                  GPS->PosN[i] = S->PosN[i] + GPS->PosNoise*GaussianRandom(GpsNoise[Ig]);
+                  GPS->VelN[i] = S->VelN[i] + GPS->VelNoise*GaussianRandom(GpsNoise[Ig]);
                }
                MxV(World[EARTH].CWN,S->PosN,PosW);
                MxV(World[EARTH].CWN,GPS->PosN,GPS->PosW);
@@ -408,6 +465,13 @@ void GpsModel(struct SCType *S)
                S->AC.GPS[Ig].WgsLng = GPS->WgsLng;
                S->AC.GPS[Ig].WgsLat = GPS->WgsLat;
                S->AC.GPS[Ig].WgsAlt = GPS->WgsAlt;
+
+               // printf("PosN: %lf %lf %lf\nPosW: %lf %lf %lf\n", 
+               //    GPS->PosN[0],GPS->PosN[1],GPS->PosN[2],
+               //    GPS->PosW[0],GPS->PosW[1],GPS->PosW[2]);
+               // printf("VelN: %lf %lf %lf\nVelW: %lf %lf %lf\n", 
+               //    GPS->VelN[0],GPS->VelN[1],GPS->VelN[2],
+               //    GPS->VelW[0],GPS->VelW[1],GPS->VelW[2]);
                
             }
          }
@@ -480,6 +544,7 @@ void FullFgsModel(struct FgsType *F, struct SCType *S)
 
       F->SampleCounter++;
       if (F->SampleCounter >= F->MaxCounter) {
+         F->lastSampleTime = DynTime;
          F->SampleCounter = 0;
          /* Centroiding */
          /* Output Angles */
@@ -500,6 +565,7 @@ void SimpleFgsModel(struct FgsType *F,struct SCType *S)
       
       F->SampleCounter++;
       if (F->SampleCounter >= F->MaxCounter) {
+         F->lastSampleTime = DynTime;
          F->SampleCounter = 0;
          B = &S->B[F->Body];
          N = &B->Node[F->Node];

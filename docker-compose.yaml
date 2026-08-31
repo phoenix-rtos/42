@@ -1,0 +1,12 @@
+services:
+  simulator:
+    build: .
+    image: 42-demo:ubuntu22.04
+    environment:
+      DISPLAY: ${DISPLAY}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    ports:
+      # Replace these sample mappings with the ports used by your setup.
+      - "20001:20001/tcp"
+      - "30001:30001/tcp"

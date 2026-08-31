@@ -9,3 +9,8 @@ a.out
 42
 42.exe
 *.ipynb_checkpoints
+.cache/*
+compile_commands.json
+.vscode/
+Run*/
+MonteCarlo/Run*_log.txt
