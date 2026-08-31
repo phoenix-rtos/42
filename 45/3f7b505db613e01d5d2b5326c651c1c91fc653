@@ -1,0 +1,223 @@
+Source/42exec.c
+  h_fc26ad17182140 80,87-89,198,349,383,444
+Source/42fsw.c
+  h_fc26ad17182140 18,27,2059-2294,2375-2405,2409-2413,2454-2456
+  h_fc26ad17182140 2295-2297
+docker-compose.yaml
+  h_fc26ad17182140 1-12
+Tx/Inp_IPC.txt
+  h_fc26ad17182140 9-10
+Source/42report.c
+  h_fc26ad17182140 282-286,304,354,356,362-366,368,382,403-412,414-425,449-452,479-484,507
+  h_fc26ad17182140 413
+Makefile
+  h_fc26ad17182140 142,238
+Dockerfile
+  h_fc26ad17182140 1-24
+InOut/Inp_Graphics.txt
+  h_fc26ad17182140 4,6,16-17
+  h_fc26ad17182140 5
+.dockerignore
+  h_fc26ad17182140 1-4
+.gitignore
+  h_fc26ad17182140 12-16
+Development/GyroModel.m
+  h_fc26ad17182140 7,14-17,26-30,34-38,40-42
+Development/ParseIGRF.c
+  h_fc26ad17182140 11-13,20,24,36-38
+"Development/igrf Multiyear.txt"
+  h_fc26ad17182140 1,3-199
+Development/igrf25.txt
+  h_fc26ad17182140 1-106
+InOut/Inp_AcOutput.txt
+  h_fc26ad17182140 2-15
+InOut/Inp_FOV.txt
+  h_fc26ad17182140 2-13,55
+InOut/Inp_IPC.txt
+  h_fc26ad17182140 4,6,10-12
+InOut/Inp_Region.txt
+  h_fc26ad17182140 4,13
+InOut/Inp_ScOutput.txt
+  h_fc26ad17182140 2-8
+InOut/Inp_Sim.txt
+  h_fc26ad17182140 4-5,7,16-17,23,39-40,42-47,51
+InOut/Orb_LEO.txt
+  h_fc26ad17182140 12,15-17,20
+InOut/SC_Simple.txt
+  h_fc26ad17182140 2-6,8,14,16,28,30-36,38,62,66-82,88,90,93-100,110,112,115-118,120-142,145,147,149,151-168,181,183-192,194-228,231,233-238,241,243-246
+Include/42types.h
+  h_fc26ad17182140 393-397,406,424,445,469,504,528,551,621,833-836
+Include/AcTypes.h
+  h_fc26ad17182140 467,493
+Kit/Source/envkit.c
+  h_fc26ad17182140 16,239,260-261,284-287,313-316
+Kit/Source/glkit.new.c
+  h_fc26ad17182140 1-3326
+Model/igrf25.txt
+  h_fc26ad17182140 1-106
+MonteCarlo/RunMC.py
+  h_fc26ad17182140 1-247
+Source/42init.c
+  h_fc26ad17182140 2985-2991
+Source/42main.c
+  h_fc26ad17182140 37-39,44
+Source/42sensors.c
+  h_fc26ad17182140 46-55,63,101-102,108,128-138,152-153,160,168,178-187,194,197,205-207,224,269,277-280,282,288,292-293,298,313,334,345-348,356,380,385,390-393,406,413-416,425,432,435-436,468-474,547,568
+Source/AcApp.c
+  h_fc26ad17182140 23
+Source/AutoCode/WriteScToCsv.c
+  h_fc26ad17182140 279
+Tx/Inp_Graphics.txt
+  h_fc26ad17182140 6,11,13-15,35,38-40,53-54
+Tx/Inp_Sim.txt
+  h_fc26ad17182140 4,6-7,19,27,29-30,35,38,50
+Tx/SC_Simple.txt
+  h_fc26ad17182140 2-6,8-11,13-16,18-22,24,28,30-38,44-58,62,64-86,88,90-100,102,104-108,110,112-143,145,147-169,171,173-179,181,183-189,191,193-199,201,203-207,209,211-220,235
+Utilities/BatchRun-bdot.sh
+  h_fc26ad17182140 1-20
+Utilities/BatchRun-ekf.sh
+  h_fc26ad17182140 1-20
+Utilities/BatchRun-pd.sh
+  h_fc26ad17182140 1-20
+Utilities/BatchRun-smc.sh
+  h_fc26ad17182140 1-20
+Utilities/demo.sh
+  h_fc26ad17182140 1,10-16,19
+bdot/Flex_Simple.txt
+  h_fc26ad17182140 1-64
+bdot/Inp_AcOutput.txt
+  h_fc26ad17182140 1-16
+bdot/Inp_Cmd.txt
+  h_fc26ad17182140 1-79
+bdot/Inp_FOV.txt
+  h_fc26ad17182140 1-57
+bdot/Inp_Graphics.txt
+  h_fc26ad17182140 1-55
+bdot/Inp_IPC.txt
+  h_fc26ad17182140 1-12
+bdot/Inp_NOS3.txt
+  h_fc26ad17182140 1-3
+bdot/Inp_Region.txt
+  h_fc26ad17182140 1-20
+bdot/Inp_ScOutput.txt
+  h_fc26ad17182140 1-9
+bdot/Inp_Sim.txt
+  h_fc26ad17182140 1-59
+bdot/Inp_TDRS.txt
+  h_fc26ad17182140 1-13
+bdot/Nodes_Simple.txt
+  h_fc26ad17182140 1-8
+bdot/Optics_Simple.txt
+  h_fc26ad17182140 1-17
+bdot/Orb_L3.txt
+  h_fc26ad17182140 1-47
+bdot/Orb_LEO.txt
+  h_fc26ad17182140 1-47
+bdot/SC_SensorFOV.txt
+  h_fc26ad17182140 1-230
+bdot/SC_Simple.txt
+  h_fc26ad17182140 1-234
+bdot/Shaker_Simple.txt
+  h_fc26ad17182140 1-44
+bdot/TRV.txt
+  h_fc26ad17182140 1-11
+bdot/Whl_Simple.txt
+  h_fc26ad17182140 1-50
+quat/Flex_Simple.txt
+  h_fc26ad17182140 1-64
+quat/Inp_AcOutput.txt
+  h_fc26ad17182140 1-16
+quat/Inp_Cmd.txt
+  h_fc26ad17182140 1-79
+quat/Inp_FOV.txt
+  h_fc26ad17182140 1-57
+quat/Inp_Graphics.txt
+  h_fc26ad17182140 1-55
+quat/Inp_IPC.txt
+  h_fc26ad17182140 1-12
+quat/Inp_NOS3.txt
+  h_fc26ad17182140 1-3
+quat/Inp_Region.txt
+  h_fc26ad17182140 1-20
+quat/Inp_ScOutput.txt
+  h_fc26ad17182140 1-9
+quat/Inp_Sim.txt
+  h_fc26ad17182140 1-59
+quat/Inp_TDRS.txt
+  h_fc26ad17182140 1-13
+quat/Nodes_Simple.txt
+  h_fc26ad17182140 1-8
+quat/Optics_Simple.txt
+  h_fc26ad17182140 1-17
+quat/Orb_L3.txt
+  h_fc26ad17182140 1-47
+quat/Orb_LEO.txt
+  h_fc26ad17182140 1-47
+quat/SC_SensorFOV.txt
+  h_fc26ad17182140 1-230
+quat/SC_Simple.txt
+  h_fc26ad17182140 1-274
+quat/Shaker_Simple.txt
+  h_fc26ad17182140 1-44
+quat/TRV.txt
+  h_fc26ad17182140 1-11
+quat/Whl_Simple.txt
+  h_fc26ad17182140 1-50
+run.sh
+  h_fc26ad17182140 1-9
+smc/Flex_Simple.txt
+  h_fc26ad17182140 1-64
+smc/Inp_AcOutput.txt
+  h_fc26ad17182140 1-16
+smc/Inp_Cmd.txt
+  h_fc26ad17182140 1-79
+smc/Inp_CommLink.txt
+  h_fc26ad17182140 1-42
+smc/Inp_FOV.txt
+  h_fc26ad17182140 1-57
+smc/Inp_Graphics.txt
+  h_fc26ad17182140 1-55
+smc/Inp_IPC.txt
+  h_fc26ad17182140 1-12
+smc/Inp_NOS3.txt
+  h_fc26ad17182140 1-3
+smc/Inp_Region.txt
+  h_fc26ad17182140 1-20
+smc/Inp_ScOutput.txt
+  h_fc26ad17182140 1-9
+smc/Inp_Sim.txt
+  h_fc26ad17182140 1-59
+smc/Inp_TDRS.txt
+  h_fc26ad17182140 1-13
+smc/Nodes_Simple.txt
+  h_fc26ad17182140 1-8
+smc/Optics_Simple.txt
+  h_fc26ad17182140 1-17
+smc/Orb_L3.txt
+  h_fc26ad17182140 1-47
+smc/Orb_LEO.txt
+  h_fc26ad17182140 1-47
+smc/SC_SensorFOV.txt
+  h_fc26ad17182140 1-230
+smc/SC_Simple.txt
+  h_fc26ad17182140 1-274
+smc/Shaker_Simple.txt
+  h_fc26ad17182140 1-44
+smc/TRV.txt
+  h_fc26ad17182140 1-11
+smc/Whl_Simple.txt
+  h_fc26ad17182140 1-50
+test.py
+  h_fc26ad17182140 1-70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "453f7b505db613e01d5d2b5326c651c1c91fc653",
+  "prompts": {},
+  "humans": {
+    "h_fc26ad17182140": {
+      "author": "Lukasz Leczkowski <lukasz.leczkowski@phoenix-rtos.com>"
+    }
+  }
+}
